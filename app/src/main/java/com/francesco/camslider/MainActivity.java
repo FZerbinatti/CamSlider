@@ -2,29 +2,31 @@ package com.francesco.camslider;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.NumberPicker;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lukedeighton.wheelview.Circle;
 import com.lukedeighton.wheelview.WheelView;
 import com.lukedeighton.wheelview.adapter.WheelAdapter;
-import com.lukedeighton.wheelview.adapter.WheelArrayAdapter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.Set;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private static final int ITEM_COUNT = 12;
@@ -35,30 +37,48 @@ public class MainActivity extends AppCompatActivity {
     TextView textview_distanza, text_distanza, text_angolo;
     Integer timer_tot_sec, int_distanza_inizio, int_distanza_fine =0;
     Button start, inizio, fine;
-    Boolean state_inizio, hasSetStart, hasSetEnd;
+    ImageButton manual;
+    Boolean distanza_state_inizio, angolo_state_inizio,  hasSetStart, hasSetEnd;
+
+    //Bluetooth setups
+    String address = null , name = null;
+    BluetoothAdapter myBluetooth = null;
+    BluetoothSocket btSocket = null;
+    Set<BluetoothDevice> pairedDevices;
+    static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final WheelView wheelView = (WheelView) findViewById(R.id.wheelview);
+        final WheelView wheelView = (WheelView) findViewById(R.id.wheelviewLineare);
         wheelView.setWheelItemCount(ITEM_COUNT);
         final ShapeDrawable[] shapeDrawables = new ShapeDrawable[ITEM_COUNT];
         textview_distanza = findViewById(R.id.textView_distanza);
         text_distanza = findViewById(R.id.text_distanza);
         text_angolo = findViewById(R.id.text_angolo);
 
-        state_inizio = true;
+
+        distanza_state_inizio = true;
+        angolo_state_inizio = true;
         hasSetEnd=false;
         hasSetStart=false;
         int_distanza_fine=0;
         int_distanza_inizio=0;
+
+        //Bluetooth
+        try {
+            setw();
+        } catch (Exception e) {
+            Log.d(TAG, "onCreate: ERRORE INCREDIBILE while SETTING UP BLUETOOTH");
+        }
 
 
         //Buttons
         start = findViewById(R.id.inizia_sessione);
         inizio = findViewById(R.id.button_inizio);
         fine = findViewById(R.id.button_fine);
+        manual = findViewById(R.id.bluetooth);
 
 
 
@@ -71,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
         secondi.setMaxValue(59);
 
 
+
+
         // Seekbar
         distanza = findViewById(R.id.seekBar_distanza);
         distanza.setMax(200);
@@ -79,6 +101,11 @@ public class MainActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
 
                 textview_distanza.setText(from_int_to_StringFloat(i));
+                if (distanza_state_inizio){
+                    sendBluetoothMessage(i);
+                }else {
+                    sendBluetoothMessage(i+1000);
+                }
 
             }
 
@@ -91,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
 
 
-                if (state_inizio){
+                if (distanza_state_inizio){
                     hasSetStart=true;
                     int_distanza_inizio = distanza.getProgress();
                     Log.d(TAG, "onStopTrackingTouch: "+int_distanza_inizio);
@@ -100,9 +127,6 @@ public class MainActivity extends AppCompatActivity {
                     int_distanza_fine = distanza.getProgress();
                     Log.d(TAG, "onStopTrackingTouch: "+int_distanza_fine);
                 }
-
-
-
 
             }
         });
@@ -127,7 +151,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
 
-
             @Override
             public int getCount() {
                 //return the count
@@ -136,38 +159,30 @@ public class MainActivity extends AppCompatActivity {
         });
 
         wheelView.setOnWheelItemSelectedListener(new WheelView.OnWheelItemSelectListener() {
+            int num_precedente =0;
             @Override
             public void onWheelItemSelected(WheelView parent,  Drawable itemDrawable, int position) {
                 //the adapter position that is closest to the selection angle and it's drawable
                 Log.d(TAG, "onWheelItemSelected: position:" + position);
+
+                if (angolo_state_inizio){
+                    Log.d(TAG, "onWheelItemSelected: inizio con angolo");
+                    sendBluetoothMessage(2000+(position*(TOTAL_DEGREE_ROTATION/ITEM_COUNT)));
+                }else {
+                    Log.d(TAG, "onWheelItemSelected: fine con angolo");
+                    sendBluetoothMessage(3000+(position*(TOTAL_DEGREE_ROTATION/ITEM_COUNT)));
+                }
+
             }
         });
 
-        start.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                timer_tot_sec = (minuti.getValue())*60 + secondi.getValue();
-                int diff_distance = int_distanza_fine-int_distanza_inizio;
-                Log.d(TAG, "onClick: timer_tot_sec:" + timer_tot_sec);
-                if (timer_tot_sec < 10){
-                    Toast.makeText(MainActivity.this, "Minimo possibile: 10 secondi",
-                            Toast.LENGTH_LONG).show();
-                    if(diff_distance<0){
-                        Toast.makeText(MainActivity.this, "L'inizio dev'essere prima della fine",
-                                Toast.LENGTH_LONG).show();
-                    }
-                }
-                if (timer_tot_sec > 10 && diff_distance >0){
-                    Toast.makeText(MainActivity.this, "Inviando impostazioni, inizio sessione",
-                            Toast.LENGTH_LONG).show();
-                }
-            }
-        });
+
 
         inizio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                state_inizio=true;
+                distanza_state_inizio = true;
+                angolo_state_inizio = true;
                 text_angolo.setText(getResources().getString(R.string.angolo_camera_di_inizio));
                 text_distanza.setText(getResources().getString(R.string.distanza_inizio));
                 Log.d(TAG, "onClick: int_distanza_inizio:"+int_distanza_inizio);
@@ -187,7 +202,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // mi treovo nella parte di dichiarazione finale
-                state_inizio=false;
+                distanza_state_inizio =    false;
+                angolo_state_inizio = false;
                 text_angolo.setText(getResources().getString(R.string.angolo_camera_di_fine));
                 text_distanza.setText(getResources().getString(R.string.distanza_fine));
                 //resetto il visualizzatore di distanza
@@ -202,11 +218,105 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        manual.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+               Intent intent = new Intent(MainActivity.this, ManualActivity.class);
+               startActivity(intent);
+            }
+        });
+
     }
 
-    private int positionToDegree(int position){
+    @SuppressLint("ClickableViewAccessibility")
+    private void setw() throws IOException
+    {
+        bluetooth_connect_device();
+        start=(Button)findViewById(R.id.inizia_sessione);
+
+        start.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                timer_tot_sec = (minuti.getValue())*60 + secondi.getValue();
+                int diff_distance = int_distanza_fine-int_distanza_inizio;
+                Log.d(TAG, "onClick: timer_tot_sec:" + timer_tot_sec);
+                if (timer_tot_sec < 10){
+                    Toast.makeText(MainActivity.this, "Minimo possibile: 10 secondi",
+                            Toast.LENGTH_LONG).show();
+                    if(diff_distance<0){
+                        Toast.makeText(MainActivity.this, "L'inizio dev'essere prima della fine",
+                                Toast.LENGTH_LONG).show();
+                    }
+                }
+                if (timer_tot_sec > 10 && diff_distance >0){
+
+                    //Bluetooth shit
+                    Log.d(TAG, "onClick: sending bluetooth message: timer_tot_sec, CODE:"+timer_tot_sec);
+                    sendBluetoothMessage(timer_tot_sec+4000);
+                    //sendBluetoothMessage(1);
+
+                    //Bluetooth shit
+
+                    Toast.makeText(MainActivity.this, "Inviando impostazioni, inizio sessione",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
+    }
+
+    private void bluetooth_connect_device() throws IOException
+    {
+        try
+        {
+            myBluetooth = BluetoothAdapter.getDefaultAdapter();
+            address = myBluetooth.getAddress();
+            pairedDevices = myBluetooth.getBondedDevices();
+            if (pairedDevices.size()>0)
+            {
+                for(BluetoothDevice bt : pairedDevices)
+                {
+                    address=bt.getAddress().toString();
+                    name = bt.getName().toString();
+                    Toast.makeText(getApplicationContext(),"Connected", Toast.LENGTH_SHORT).show();
+
+                }
+            }
+
+        }
+        catch(Exception we){}
+        myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
+        BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
+        btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
+        btSocket.connect();
+        Toast.makeText(getApplicationContext(),"bluetooth_connect_device: "+"BT Name: "+name+"\nBT Address: " , Toast.LENGTH_SHORT).show();
+        try {
+
+             }
+        catch(Exception e){}
+    }
+
+    private void sendBluetoothMessage(Integer i)
+    {
+        try
+        {
+            if (btSocket!=null)
+            {
+                Log.d(TAG, "sendBluetoothMessage: SENDING DATA VIA BLUETOOTH, CODE: "+i);
+                btSocket.getOutputStream().write(i.toString().getBytes());
+            }
+
+        }
+        catch (Exception e)
+        {
+            Toast.makeText(getApplicationContext(),e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
+    public int positionToDegree(int position){
         if (position == 0){
-            return TOTAL_DEGREE_ROTATION;}
+            return 0;}
         else {
             return position*(TOTAL_DEGREE_ROTATION/ITEM_COUNT);
         }
