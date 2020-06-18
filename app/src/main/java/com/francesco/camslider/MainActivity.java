@@ -14,6 +14,7 @@ import android.graphics.drawable.shapes.OvalShape;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.NumberPicker;
@@ -59,6 +60,9 @@ public class MainActivity extends AppCompatActivity {
         text_angolo = findViewById(R.id.text_angolo);
 
 
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+
+
         distanza_state_inizio = true;
         angolo_state_inizio = true;
         hasSetEnd=false;
@@ -68,9 +72,9 @@ public class MainActivity extends AppCompatActivity {
 
         //Bluetooth
         try {
-            setw();
+            initializeBluetooth();
         } catch (Exception e) {
-            Log.d(TAG, "onCreate: ERRORE INCREDIBILE while SETTING UP BLUETOOTH");
+           // Log.d(TAG, "onCreate: ERRORE INCREDIBILE while SETTING UP BLUETOOTH");
         }
 
 
@@ -80,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
         fine = findViewById(R.id.button_fine);
         manual = findViewById(R.id.bluetooth);
 
+
+        inizio.setBackgroundResource((R.drawable.button_blue_background));
 
 
         // Number Pickers
@@ -121,11 +127,11 @@ public class MainActivity extends AppCompatActivity {
                 if (distanza_state_inizio){
                     hasSetStart=true;
                     int_distanza_inizio = distanza.getProgress();
-                    Log.d(TAG, "onStopTrackingTouch: "+int_distanza_inizio);
+                  //  Log.d(TAG, "onStopTrackingTouch: "+int_distanza_inizio);
                 }else {
                     hasSetEnd=true;
                     int_distanza_fine = distanza.getProgress();
-                    Log.d(TAG, "onStopTrackingTouch: "+int_distanza_fine);
+                  //  Log.d(TAG, "onStopTrackingTouch: "+int_distanza_fine);
                 }
 
             }
@@ -158,20 +164,42 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+/*
         wheelView.setOnWheelItemSelectedListener(new WheelView.OnWheelItemSelectListener() {
             int num_precedente =0;
             @Override
             public void onWheelItemSelected(WheelView parent,  Drawable itemDrawable, int position) {
                 //the adapter position that is closest to the selection angle and it's drawable
-                Log.d(TAG, "onWheelItemSelected: position:" + position);
+             //   Log.d(TAG, "onWheelItemSelected: position:" + position);
 
                 if (angolo_state_inizio){
-                    Log.d(TAG, "onWheelItemSelected: inizio con angolo");
+                   // Log.d(TAG, "onWheelItemSelected: inizio con angolo");
                     sendBluetoothMessage(2000+(position*(TOTAL_DEGREE_ROTATION/ITEM_COUNT)));
                 }else {
-                    Log.d(TAG, "onWheelItemSelected: fine con angolo");
+                  //  Log.d(TAG, "onWheelItemSelected: fine con angolo");
                     sendBluetoothMessage(3000+(position*(TOTAL_DEGREE_ROTATION/ITEM_COUNT)));
                 }
+
+            }
+        });
+*/
+
+
+        wheelView.setOnWheelAngleChangeListener(new WheelView.OnWheelAngleChangeListener() {
+            @Override
+            public void onWheelAngleChange(float angle) {
+              //  Log.d(TAG, "onWheelAngleChange: angle: "+Math.round(angle));
+                int rounded = Math.round(angle);
+                //the new angle of the wheel
+                if (angolo_state_inizio){
+                //    Log.d(TAG, "onWheelItemSelected: inizio con angolo");
+                    sendBluetoothMessage(2360+(rounded));
+                }else {
+                 //   Log.d(TAG, "onWheelItemSelected: fine con angolo");
+                    sendBluetoothMessage(3360+(rounded));
+                }
+
+
 
             }
         });
@@ -181,11 +209,15 @@ public class MainActivity extends AppCompatActivity {
         inizio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                inizio.setBackgroundResource((R.drawable.button_blue_background));
+                fine.setBackgroundResource((R.drawable.button_white_background));
+
                 distanza_state_inizio = true;
                 angolo_state_inizio = true;
                 text_angolo.setText(getResources().getString(R.string.angolo_camera_di_inizio));
                 text_distanza.setText(getResources().getString(R.string.distanza_inizio));
-                Log.d(TAG, "onClick: int_distanza_inizio:"+int_distanza_inizio);
+               // Log.d(TAG, "onClick: int_distanza_inizio:"+int_distanza_inizio);
                 if (hasSetStart){
                     textview_distanza.setText(from_int_to_StringFloat(int_distanza_inizio));
                     distanza.setProgress(int_distanza_inizio);
@@ -201,6 +233,9 @@ public class MainActivity extends AppCompatActivity {
         fine.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                fine.setBackgroundResource((R.drawable.button_blue_background));
+                inizio.setBackgroundResource((R.drawable.button_white_background));
                 // mi treovo nella parte di dichiarazione finale
                 distanza_state_inizio =    false;
                 angolo_state_inizio = false;
@@ -222,15 +257,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                Intent intent = new Intent(MainActivity.this, ManualActivity.class);
-               startActivity(intent);
+               /*if (btSocket != null) {
+                   try {
+                       btSocket.close();
+                   } catch (IOException e) {
+                       e.printStackTrace();
+                   }
+               }*/
+                startActivity(intent);
             }
         });
 
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private void setw() throws IOException
-    {
+    private void initializeBluetooth() throws IOException {
         bluetooth_connect_device();
         start=(Button)findViewById(R.id.inizia_sessione);
 
@@ -239,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 timer_tot_sec = (minuti.getValue())*60 + secondi.getValue();
                 int diff_distance = int_distanza_fine-int_distanza_inizio;
-                Log.d(TAG, "onClick: timer_tot_sec:" + timer_tot_sec);
+              //  Log.d(TAG, "onClick: timer_tot_sec:" + timer_tot_sec);
                 if (timer_tot_sec < 10){
                     Toast.makeText(MainActivity.this, "Minimo possibile: 10 secondi",
                             Toast.LENGTH_LONG).show();
@@ -251,7 +292,7 @@ public class MainActivity extends AppCompatActivity {
                 if (timer_tot_sec > 10 && diff_distance >0){
 
                     //Bluetooth shit
-                    Log.d(TAG, "onClick: sending bluetooth message: timer_tot_sec, CODE:"+timer_tot_sec);
+                //    Log.d(TAG, "onClick: sending bluetooth message: timer_tot_sec, CODE:"+timer_tot_sec);
                     sendBluetoothMessage(timer_tot_sec+4000);
                     //sendBluetoothMessage(1);
 
@@ -265,8 +306,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void bluetooth_connect_device() throws IOException
-    {
+    private void bluetooth_connect_device() throws IOException {
         try
         {
             myBluetooth = BluetoothAdapter.getDefaultAdapter();
@@ -296,8 +336,7 @@ public class MainActivity extends AppCompatActivity {
         catch(Exception e){}
     }
 
-    private void sendBluetoothMessage(Integer i)
-    {
+    public void sendBluetoothMessage(Integer i) {
         try
         {
             if (btSocket!=null)

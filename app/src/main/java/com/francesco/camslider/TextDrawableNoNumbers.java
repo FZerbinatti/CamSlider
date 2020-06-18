@@ -15,13 +15,13 @@ public class TextDrawableNoNumbers extends Drawable {
 
     public TextDrawableNoNumbers(String text) {
 
-        //this.text = "O"+ (char) 0x00B0;
-        this.text = "O";
+        this.text =text;
+        //this.text = "O";
 
 
         this.paint = new Paint();
         paint.setColor(Color.GRAY);
-        paint.setTextSize(30f);
+        paint.setTextSize(40f);
         paint.setAntiAlias(true);
         paint.setFakeBoldText(true);
         paint.setShadowLayer(12f, 0, 0, Color.WHITE);
