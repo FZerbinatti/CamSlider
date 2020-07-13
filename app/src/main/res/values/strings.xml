@@ -1,7 +1,9 @@
 <resources>
-    <string name="app_name">CamSlider</string>
+    <string name="app_name">BREA</string>
     <string name="angolo_camera_di_inizio">Angolo camera di inizio</string>
     <string name="angolo_camera_di_fine">Angolo camera di fine</string>
     <string name="distanza_inizio">Distanza inizio</string>
     <string name="distanza_fine">Distanza fine</string>
+    <string name="distance">Distance</string>
+    <string name="rotation">Rotation</string>
 </resources>

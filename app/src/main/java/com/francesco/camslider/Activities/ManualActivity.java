@@ -1,4 +1,4 @@
-package com.francesco.camslider;
+package com.francesco.camslider.Activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -8,11 +8,8 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import java.io.IOException;
 import java.util.Set;
-import java.util.Timer;
 import java.util.UUID;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.os.Bundle;
@@ -20,28 +17,56 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lukedeighton.wheelview.WheelView;
-import com.lukedeighton.wheelview.adapter.WheelAdapter;
+import com.francesco.camslider.GraphicLibraries.CounterHandler;
+import com.francesco.camslider.R;
 
-public class ManualActivity extends AppCompatActivity implements CounterHandler.CounterListener{
+import io.github.controlwear.virtual.joystick.android.JoystickView;
+
+
+public class ManualActivity extends AppCompatActivity implements CounterHandler.CounterListener {
 
     ImageButton timed;
-    private static final int STOP_ALL_MOTOR = -1;
-    private static final int STOP_LINEAR_MOTOR = -2;
-    private static final int STOP_ROTATION_MOTOR = -3;
+    private static final char STOP_LINEAR_MOTOR = 'i';
+    private static final char STOP_ROTATION_MOTOR = 'm';
+    private static final char STOP_TILTING_MOTOR = 'l';
+    private static final char HOMING_SEQUENCE = 'g';
+    private static final char GO_END = 'h';
+    private static final char SLIDE_LEFT = 'a';
+    private static final char SLIDE_RIGHT = 'b';
+    private static final char TILT_DOWN = 'c';
+    private static final char TILT_UP = 'd';
+    private static final char ROTATE_LEFT = 'e';
+    private static final char ROTATE_RIGHT = 'f';
+
+    private static final int JOYSTICK_Hz = 5;
+    private static final int JOYSTICK_MS = ( Math.round(((float) 1/(JOYSTICK_Hz))*1000));
+
+
+    private static final int LINEAR_Hz = 2;
+    private static final int LINEAR_MS = ( Math.round(((float) 1/(LINEAR_Hz))*1000));
+
+
+    private static final int ARDUINO_DELAY_TIME = 0;
+
+
     private static final int ITEM_COUNT = 10;
     private static final int TOTAL_DEGREE_ROTATION = 10;
     private final String TAG ="ManualActivity: ";
-    TextView velocita_rotazione, rotazione, velocita_movimento, distanza;
-    ImageButton zeroing, arrow_left, arrow_right, arrow_rotate_left, arrow_rotate_right, hide_texts;
+    TextView velocita_rotazione, rotazione, velocita_movimento, distanza, textView_tilting;
+    ImageButton zeroing, arrow_left, arrow_right, hide_texts, go_end, settings;
     Long velox_angolo, velox_distanza;
     MainActivity mainActivity;
     Integer delay_time_angolo, delay_time_distanza;
     Boolean text_hided;
+    JoystickView joystick;
+    Button linear_speed_1,linear_speed_2,linear_speed_3,linear_speed_4;
+    Integer linear_speed=1, rotation_speed = 1 , tilting_speed = 4;
+
 
     TextView textView01, textView02, textView03, textView04, textView05, textView06, textView07;
 
@@ -58,8 +83,6 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manual);
         timed = findViewById(R.id.bottom_timed);
-        final WheelView wheelviewLineare = (WheelView) findViewById(R.id.wheelviewLineare);
-        final WheelView wheelviewRotazione = (WheelView) findViewById(R.id.wheelviewRotazione);
 
         textView01 = findViewById(R.id.textView01);
         textView02 = findViewById(R.id.textView02);
@@ -71,20 +94,25 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
         hide_texts = findViewById(R.id.hide_texts);
         text_hided = false;
 
+/*      linear_speed_1 = findViewById(R.id.linear_speed_1);
+        linear_speed_2 = findViewById(R.id.linear_speed_2);
+        linear_speed_3 = findViewById(R.id.linear_speed_3);
+        linear_speed_4 = findViewById(R.id.linear_speed_4);*/
+
         velocita_movimento = findViewById(R.id.textView_velocitaMovimento);
         velocita_rotazione = findViewById(R.id.textView_velocitaRotazione);
         rotazione = findViewById(R.id.textView_rotazione);
         distanza = findViewById(R.id.textView_movimento);
+        textView_tilting = findViewById(R.id.textView_tilting);
+        settings = findViewById(R.id.button_settings);
+
 
         zeroing= findViewById(R.id. button_zeroing);
         arrow_left= findViewById(R.id.arrow_left);
         arrow_right= findViewById(R.id. arrow_right);
-        arrow_rotate_left= findViewById(R.id. arrow_rotate_left);
-        arrow_rotate_right= findViewById(R.id. arrow_rotate_right);
+        go_end = findViewById(R.id.go_end);
 
-        wheelviewRotazione.setWheelItemCount(ITEM_COUNT);
-        wheelviewLineare.setWheelItemCount(ITEM_COUNT);
-
+        joystick = (JoystickView) findViewById(R.id.joystickView);
 
         velox_angolo =1L;
         velox_distanza=1L;
@@ -125,6 +153,22 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
             }
         });
 
+        settings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent( ManualActivity.this, SettingsActivity.class);
+                startActivity(intent);
+
+            }
+        });
+
+        go_end.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendBluetoothMessage(GO_END);
+            }
+        });
+
         timed.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -149,6 +193,88 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
 
         }
 
+/*
+        // ---------------------------------------------------------------------------------------------------------------------- bottoni speed ---------------------------------------------------------------------------------------------------------------------
+
+        linear_speed_1.setBackgroundResource(R.drawable.button_blue_background);
+
+        linear_speed_1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                linear_speed_1.setBackgroundResource(R.drawable.button_blue_background);
+                linear_speed_2.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_3.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_4.setBackgroundResource(R.drawable.button_white_background);
+
+                linear_speed = 1;
+            }
+        });
+        linear_speed_2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                linear_speed_1.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_2.setBackgroundResource(R.drawable.button_blue_background);
+                linear_speed_3.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_4.setBackgroundResource(R.drawable.button_white_background);
+
+                linear_speed = 2;
+            }
+        });
+        linear_speed_3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                linear_speed_1.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_2.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_3.setBackgroundResource(R.drawable.button_blue_background);
+                linear_speed_4.setBackgroundResource(R.drawable.button_white_background);
+
+                linear_speed = 3;
+            }
+        });
+        linear_speed_4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                linear_speed_1.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_2.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_3.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_4.setBackgroundResource(R.drawable.button_blue_background);
+
+                linear_speed = 4;
+            }
+        });
+*/
+
+        // ---------------------------------------------------------------------------------------------------------------------- joystick ---------------------------------------------------------------------------------------------------------------------
+
+        joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
+            @Override
+            public void onMove(int angle, int strength) {
+               // Log.d(TAG, "onMove: angle: "+angle + " - strenght: " + strength);
+
+                if (angle == 0 || strength == 0){
+                    sendBluetoothMessage(STOP_ROTATION_MOTOR);
+                    sendBluetoothMessage(STOP_TILTING_MOTOR);
+                }
+
+                if (angle > 0 && angle < 45 || angle > 315 ){
+                   sendBluetoothMessage(ROTATE_RIGHT);
+                    rotazione.setText(String.valueOf(Integer.valueOf(rotazione.getText().toString())+1));
+                 }else if(angle > 45 && angle < 135){
+                   sendBluetoothMessage(TILT_UP);
+                    textView_tilting.setText(String.valueOf(Integer.valueOf(textView_tilting.getText().toString())+1));
+                 }else if(angle > 135 && angle < 225){
+                   sendBluetoothMessage(ROTATE_LEFT);
+                    rotazione.setText(String.valueOf(Integer.valueOf(rotazione.getText().toString())-1));
+                 }else if (angle > 225 && angle < 315){
+                   sendBluetoothMessage(TILT_DOWN);
+                    textView_tilting.setText(String.valueOf(Integer.valueOf(textView_tilting.getText().toString())-1));
+                 }
+
+
+
+            }
+        },JOYSTICK_MS);
+
 
 
         // ---------------------------------------------------------------------------------------------------------------------- arrows ---------------------------------------------------------------------------------------------------------------------
@@ -161,10 +287,10 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
                 switch(event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         Log.d(TAG, "onTouch: pressed");
-                        sendBluetoothMessage(10000);
+                        sendBluetoothMessage(SLIDE_RIGHT);
                         if (mHandler != null) return true;
                         mHandler = new Handler();
-                        mHandler.postDelayed(mAction, 1);
+                        mHandler.postDelayed(mAction, ARDUINO_DELAY_TIME);
                         break;
                     case MotionEvent.ACTION_UP:
                         Log.d(TAG, "onTouch: unpressed");
@@ -181,9 +307,9 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
             Runnable mAction = new Runnable() {
                 @Override public void run() {
                   distanza.setText(String.valueOf(Integer.valueOf(distanza.getText().toString())+1));
-                   int local_velox = Integer.valueOf(velocita_movimento.getText().toString());
-                   delay_time_distanza = ( Math.round(((float) 1/(local_velox))*1000));
-                  mHandler.postDelayed(this, delay_time_distanza);
+                   //int local_velox = 2;
+                   //delay_time_distanza = ( Math.round(((float) 1/(local_velox))*1000));
+                  mHandler.postDelayed(this, LINEAR_MS);
                 }
             };
 
@@ -198,10 +324,10 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
                     switch(event.getAction()) {
                         case MotionEvent.ACTION_DOWN:
                             Log.d(TAG, "onTouch: pressed");
-                            sendBluetoothMessage(11000);
+                            sendBluetoothMessage(SLIDE_LEFT);
                             if (mHandler != null) return true;
                             mHandler = new Handler();
-                            mHandler.postDelayed(mAction, 1);
+                            mHandler.postDelayed(mAction, ARDUINO_DELAY_TIME);
                             break;
                         case MotionEvent.ACTION_UP:
                             Log.d(TAG, "onTouch: unpressed");
@@ -222,10 +348,10 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
                             distanza.setText(String.valueOf(local_distance-1));
                         }
 
-                        int local_velox = Integer.valueOf(velocita_movimento.getText().toString());
+                        //int local_velox = 2;
                         //sendBluetoothMessage(11000+ local_velox);
-                        delay_time_distanza = ( Math.round(((float) 1/(local_velox))*1000));
-                        mHandler.postDelayed(this, delay_time_distanza);
+                        //delay_time_distanza = ( Math.round(((float) 1/(local_velox))*1000));
+                        mHandler.postDelayed(this, LINEAR_MS);
                     }
                 };
 
@@ -234,82 +360,12 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
 
 
 
-        arrow_rotate_right.setOnTouchListener(new View.OnTouchListener() {
 
-            private Handler mHandler;
-
-            @Override public boolean onTouch(View v, MotionEvent event) {
-                switch(event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        Log.d(TAG, "onTouch: pressed");
-                        sendBluetoothMessage(12000);
-                        if (mHandler != null) return true;
-                        mHandler = new Handler();
-                        mHandler.postDelayed(mAction, 1);
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        Log.d(TAG, "onTouch: unpressed");
-                        sendBluetoothMessage(STOP_ROTATION_MOTOR);
-                        if (mHandler == null) return true;
-                        mHandler.removeCallbacks(mAction);
-                        mHandler = null;
-                        break;
-                }
-                return false;
-            }
-
-            Runnable mAction = new Runnable() {
-                @Override public void run() {
-                    rotazione.setText(String.valueOf(Integer.valueOf(rotazione.getText().toString())+1));
-                    int local_angle = Integer.valueOf(velocita_rotazione.getText().toString());
-                    //sendBluetoothMessage(12000+ local_angle);
-                    delay_time_angolo = ( Math.round(((float) 1/(local_angle))*1000));
-                    mHandler.postDelayed(this, delay_time_angolo);
-                }
-            };
-
-        });
-
-        arrow_rotate_left.setOnTouchListener(new View.OnTouchListener() {
-
-            private Handler mHandler;
-
-            @Override public boolean onTouch(View v, MotionEvent event) {
-                switch(event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        Log.d(TAG, "onTouch: pressed");
-                        sendBluetoothMessage(13000);
-                        if (mHandler != null) return true;
-                        mHandler = new Handler();
-                        mHandler.postDelayed(mAction, 1);
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        Log.d(TAG, "onTouch: unpressed");
-                        sendBluetoothMessage(STOP_ROTATION_MOTOR);
-                        if (mHandler == null) return true;
-                        mHandler.removeCallbacks(mAction);
-                        mHandler = null;
-                        break;
-                }
-                return false;
-            }
-
-            Runnable mAction = new Runnable() {
-                @Override public void run() {
-                    rotazione.setText(String.valueOf(Integer.valueOf(rotazione.getText().toString())-1));
-                    int local_angle = Integer.valueOf(velocita_rotazione.getText().toString());
-                    //sendBluetoothMessage(13000+ local_angle);
-                    delay_time_angolo = ( Math.round(((float) 1/(local_angle))*1000));
-                    mHandler.postDelayed(this, delay_time_angolo);
-                }
-            };
-
-        });
 
         zeroing.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sendBluetoothMessage(STOP_ALL_MOTOR);
+                sendBluetoothMessage(HOMING_SEQUENCE);
                 final int value = Integer.valueOf(distanza.getText().toString());
                 Thread t=new Thread(){
                     @Override
@@ -375,163 +431,47 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
 
                 t2.start();
 
+                final int valueTilt = Integer.valueOf(textView_tilting.getText().toString());
 
-
-
-
-
-
-
-
-
-            }
-        });
-
-
-
-
-
-
-
-
-
-        // ---------------------------------------------------------------------------------------------------------------------- wheel rotazione ---------------------------------------------------------------------------------------------------------------------
-
-
-        wheelviewRotazione.setAdapter(new WheelAdapter() {
-            @Override
-            public Drawable getDrawable(int position) {
-                //return drawable here - the position can be seen in the gifs above
-                Drawable[] drawable = new Drawable[] {
-
-                        shapeDrawables[position], new TextDrawableNoNumbers(String.valueOf((position+1)))
-
-                };
-                return new LayerDrawable(drawable);
-
-            }
-
-            @Override
-            public int getCount() {
-                //return the count
-                return ITEM_COUNT;
-            }
-        });
-
-        wheelviewRotazione.setOnWheelItemSelectedListener(new WheelView.OnWheelItemSelectListener() {
-            @Override
-            public void onWheelItemSelected(WheelView parent, Drawable itemDrawable, int position) {
-                Log.d(TAG, "onWheelItemSelected: position:" + position);
-                int incrementedPosition = position+1;
-                velocita_rotazione.setText(""+incrementedPosition);
-                sendBluetoothMessage(11000+incrementedPosition);
-            }
-        });
-
-
-        // angle change listener
-        /*
-
-                wheelviewRotazione.setOnWheelAngleChangeListener(new WheelView.OnWheelAngleChangeListener() {
+                Thread t3=new Thread(){
                     @Override
-                    public void onWheelAngleChange(float angle) {
-                        int rounded_rotazione  = Math.round(angle);
-          //              Log.d(TAG, "onWheelAngleChange: angle: "+rounded_rotazione);
-                        //the new angle of the wheel
-                        if (rounded_rotazione<0){
-                            velocita_rotazione.setText("0");
-                        }else {
-                            velox_angolo = Math.round(rounded_rotazione*0.1 );
-                            velocita_rotazione.setText( String.valueOf( velox_angolo ));
+                    public void run(){
+                        final int[] count = {valueAngle};
+                        while(count[0] >1 || count[0]<-1){
 
-                            if (velox_angolo>0){
+                            try {
+                                Thread.sleep(30);  //1000ms = 1 sec
 
+                                runOnUiThread(new Runnable() {
 
-                                new CounterHandler.Builder()
-                                        .incrementalView(arrow_rotate_right)
-                                        .decrementalView(arrow_rotate_left)
-                                        .minRange(0) // cant go any less than -50
-                                        .maxRange(200) // cant go any further than 50
-                                        .code(2)
-                                        .isCycle(true) // 49,50,-50,-49 and so on
-                                        .counterDelay( delay_time_angolo  ) // speed of counter
-                                        .counterStep(1)  // steps e.g. 0,2,4,6...
-                                        .listener(ManualActivity.this) // to listen counter results and show them in app
-                                        .build();
+                                    @Override
+                                    public void run() {
+                                        if (count[0]>0){
+                                            count[0]--;
+                                        }else {
+                                            count[0]++;
+                                        }
 
+                                        textView_tilting.setText(String.valueOf(count[0]));
+                                    }
+                                });
+
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
                             }
-                        }
 
-                    }
-                });
-        */
-
-        // ---------------------------------------------------------------------------------------------------------------------- wheel lineare ---------------------------------------------------------------------------------------------------------------------
-
-
-        wheelviewLineare.setAdapter(new WheelAdapter() {
-            @Override
-            public Drawable getDrawable(int position) {
-                Drawable[] drawable = new Drawable[] {
-                        shapeDrawables[position], new TextDrawableNoNumbers(String.valueOf((position+1)))
-                };
-                return new LayerDrawable(drawable);
-            }
-
-            @Override
-            public int getCount() {
-                //return the count
-                return ITEM_COUNT;
-            }
-        });
-
-
-        wheelviewLineare.setOnWheelItemSelectedListener(new WheelView.OnWheelItemSelectListener() {
-            @Override
-            public void onWheelItemSelected(WheelView parent,  Drawable itemDrawable, int position) {
-                //the adapter position that is closest to the selection angle and it's drawable
-                   Log.d(TAG, "onWheelItemSelected: position:" + position);
-                    int incrementedPosition = position+1;
-                   velocita_movimento.setText(""+incrementedPosition);
-                    sendBluetoothMessage(10000+incrementedPosition);
-            }
-        });
-
-        // angle change listener
-        /*        wheelviewLineare.setOnWheelAngleChangeListener(new WheelView.OnWheelAngleChangeListener() {
-                    @Override
-                    public void onWheelAngleChange(float angle) {
-                        int rounded_movimento = Math.round(angle);
-                        //Log.d(TAG, "onWheelAngleChange: angle: "+rounded_movimento);
-                        //the new angle of the wheel
-                        if (rounded_movimento<1){
-                            velocita_movimento.setText("0");
-
-                        }else{
-
-                            velox_distanza = Math.round(rounded_movimento*0.1 );
-
-                            velocita_movimento.setText( String.valueOf( velox_distanza ));
-
-                            if (velox_distanza>0){
-                                delay_time_distanza = ( Math.round(((float) 1/(velox_distanza))*1000));
-
-                                new CounterHandler.Builder()
-                                        .incrementalView(arrow_right)
-                                        .decrementalView(arrow_left)
-                                        .minRange(0) // cant go any less than -50
-                                        .maxRange(100) // cant go any further than 50
-                                        .code(1)
-                                        .isCycle(true) // 49,50,-50,-49 and so on
-                                        .counterDelay( delay_time_distanza  ) // speed of counter
-                                        .counterStep(1)  // steps e.g. 0,2,4,6...
-                                        .listener(ManualActivity.this) // to listen counter results and show them in app
-                                        .build();
-
-                            }
                         }
                     }
-                });*/
+                };
+
+                t3.start();
+
+            }
+        });
+
+
+
+
 
 
     }
@@ -594,14 +534,8 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
         catch(Exception e){}
     }
 
-    public void sendBluetoothMessage(Integer i) {
-/*        if (i==-1){
-            Log.d(TAG, "sendBluetoothMessage: STOP ALL MOTORS");
-        } else if (i==-2){
-            Log.d(TAG, "sendBluetoothMessage: STOP LINEAR MOTORS");
-        }  else if (i==-3){
-        Log.d(TAG, "sendBluetoothMessage: STOP ROTATE MOTORS");
-        }*/
+    public void sendBluetoothMessage(char i) {
+
         try
         {
             if (btSocket!=null)
@@ -609,7 +543,7 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
 
                 Log.d(TAG, "sendBluetoothMessage: SENDING DATA VIA BLUETOOTH, CODE: "+i);
                // Log.d(TAG, "sendBluetoothMessage: SENDING DATA VIA BLUETOOTH, CODED: " +i.toString().getBytes());
-                btSocket.getOutputStream().write(i.toString().getBytes());
+                btSocket.getOutputStream().write(String.valueOf(i).getBytes());
             }
 
         }

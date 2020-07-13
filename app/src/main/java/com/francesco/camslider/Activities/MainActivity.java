@@ -1,4 +1,4 @@
-package com.francesco.camslider;
+package com.francesco.camslider.Activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -22,6 +22,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.francesco.camslider.R;
+import com.francesco.camslider.GraphicLibraries.TextDrawable;
 import com.lukedeighton.wheelview.WheelView;
 import com.lukedeighton.wheelview.adapter.WheelAdapter;
 
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     BluetoothSocket btSocket = null;
     Set<BluetoothDevice> pairedDevices;
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

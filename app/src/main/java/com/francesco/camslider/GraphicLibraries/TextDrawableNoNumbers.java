@@ -1,4 +1,4 @@
-package com.francesco.camslider;
+package com.francesco.camslider.GraphicLibraries;
 
 import android.graphics.Canvas;
 import android.graphics.Color;

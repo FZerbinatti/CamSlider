@@ -7,7 +7,7 @@
                 android:color="#000000" />
             <gradient android:angle="-90"
                 android:startColor="@color/transparent"
-                android:endColor="@color/blue_light_opaque"  />
+                android:endColor="@color/blue_app"  />
         </shape>
     </item>
     <item android:state_focused="true">

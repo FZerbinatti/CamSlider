@@ -1,4 +1,4 @@
-package com.francesco.camslider;
+package com.francesco.camslider.GraphicLibraries;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;

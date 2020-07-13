@@ -7,6 +7,9 @@
     <color name="white">#FFFFFF</color>
     <color name="opaque_white">#80FFFFFF</color>
     <color name="blue_light_opaque">#03A9F4</color>
+    <color name="blue_app">#195BDF</color>
+
+
 
     <color name="red">#FF1100</color>
 
