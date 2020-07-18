@@ -23,14 +23,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.francesco.camslider.Database.DatabaseHelper;
-import com.francesco.camslider.GraphicLibraries.CounterHandler;
+
 import com.francesco.camslider.Objects.Setting;
 import com.francesco.camslider.R;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
 
-public class ManualActivity extends AppCompatActivity implements CounterHandler.CounterListener {
+public class ManualActivity extends AppCompatActivity  {
 
     DatabaseHelper mDatabaseHelper;
 
@@ -65,7 +65,6 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
     TextView velocita_rotazione, rotazione, velocita_movimento, distanza, textView_tilting;
     ImageButton zeroing, arrow_left, arrow_right, hide_texts, go_end, settings, this_is_zero;
     Long velox_angolo, velox_distanza;
-    MainActivity mainActivity;
     Integer delay_time_angolo, delay_time_distanza;
     Boolean text_hided;
     JoystickView joystick;
@@ -86,7 +85,6 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manual);
-        timed = findViewById(R.id.bottom_timed);
 
         mDatabaseHelper = new DatabaseHelper(getApplicationContext());
 
@@ -113,8 +111,8 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
         linear_speed_3 = findViewById(R.id.linear_speed_3);
         linear_speed_4 = findViewById(R.id.linear_speed_4);*/
 
-        velocita_movimento = findViewById(R.id.textView_velocitaMovimento);
-        velocita_rotazione = findViewById(R.id.textView_velocitaRotazione);
+/*        velocita_movimento = findViewById(R.id.textView_velocitaMovimento);
+        velocita_rotazione = findViewById(R.id.textView_velocitaRotazione);*/
         rotazione = findViewById(R.id.textView_rotazione);
         distanza = findViewById(R.id.textView_movimento);
         textView_tilting = findViewById(R.id.textView_tilting);
@@ -187,22 +185,7 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
             }
         });
 
-        timed.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(ManualActivity.this, MainActivity.class);
 
-/*                if (btSocket != null) {
-                    try {
-                        btSocket.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }*/
-                startActivity(intent);
-                finish();
-            }
-        });
 
 
         for (int i =0; i<ITEM_COUNT; i++){
@@ -526,25 +509,7 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
     }
 
 
-    @Override
-    public void onIncrement(View view, long number, int code) {
 
-        if (code == 1) {
-            distanza.setText(String.valueOf(number));
-        }else if (code == 2 ){
-            rotazione.setText(String.valueOf(number));
-        }
-
-    }
-
-    @Override
-    public void onDecrement(View view, long number, int code) {
-        if (code == 1) {
-            distanza.setText(String.valueOf(number));
-        }else if (code == 2 ){
-            rotazione.setText(String.valueOf(number));
-        }
-    }
 
     @SuppressLint("ClickableViewAccessibility")
     private void initializeBluetooth() throws IOException
