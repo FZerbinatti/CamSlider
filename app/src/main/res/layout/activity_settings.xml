@@ -361,7 +361,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Joystick frequency hz"
+            android:text="1st dysplayed field frequency"
             android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="@+id/settings_slide_v9"
             app:layout_constraintStart_toStartOf="parent"
@@ -374,6 +374,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="5"
+            android:layout_marginTop="5dp"
             android:inputType="phone"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
@@ -385,7 +386,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Top Bar frequency hz"
+            android:text="2nd and 3rd displayed frequency"
             android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="@+id/settings_slide_v10"
             app:layout_constraintStart_toStartOf="parent"
@@ -398,6 +399,8 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:inputType="number"
+            android:layout_marginTop="5dp"
+
             android:text="2"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
@@ -406,7 +409,7 @@
 
 
         <Button
-            android:id="@+id/inizia_sessione"
+            android:id="@+id/settings_save"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"

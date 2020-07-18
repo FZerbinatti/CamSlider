@@ -2,6 +2,7 @@ package com.francesco.camslider.Objects;
 
 public class Setting {
 
+    //6
     String distance;
     String distance_um;
     String rotation;
@@ -9,41 +10,38 @@ public class Setting {
     String tilting;
     String tilting_um;
 
+    //12
     String slide_left;
     String slide_left_value;
     String slide_right;
     String slide_right_value;
-    String rotate_CCW;
-    String rotate_CCW_value;
-    String rotate_CW;
-    String rotate_CW_value;
+
     String tilt_down;
     String tilt_down_value;
     String tilt_up;
     String tilt_up_value;
 
+    String rotate_CCW;
+    String rotate_CCW_value;
+    String rotate_CW;
+    String rotate_CW_value;
+
+
+
+    //4
     String home;
     String home_value;
     String end;
     String end_value;
 
-    String joystick_frequency;
-    String joystick_frequency_value;
-    String top;
+    //2
     String top_value;
-
-    public Setting() {
-
-    }
-
-    public Setting(String distance, String distance_um, String rotation, String rotation_um,
-                   String tilting, String tilting_um, String slide_left, String slide_left_value, String slide_right, String slide_right_value,
-                   String rotate_CCW, String rotate_CCW_value, String rotate_CW, String rotate_CW_value,
-                   String tilt_down, String tilt_down_value, String tilt_up, String tilt_up_value,
-                   String home, String home_value, String end, String end_value,
-                   String joystick_frequency, String joystick_frequency_value, String top, String top_value) {
+    String joystick_frequency_value;
 
 
+    public Setting() { }
+
+    public Setting(String distance, String distance_um, String rotation, String rotation_um, String tilting, String tilting_um, String slide_left, String slide_left_value, String slide_right, String slide_right_value, String tilt_down, String tilt_down_value, String tilt_up, String tilt_up_value, String rotate_CCW, String rotate_CCW_value, String rotate_CW, String rotate_CW_value, String home, String home_value, String end, String end_value, String top_value, String joystick_frequency_value) {
         this.distance = distance;
         this.distance_um = distance_um;
         this.rotation = rotation;
@@ -54,22 +52,20 @@ public class Setting {
         this.slide_left_value = slide_left_value;
         this.slide_right = slide_right;
         this.slide_right_value = slide_right_value;
-        this.rotate_CCW = rotate_CCW;
-        this.rotate_CCW_value = rotate_CCW_value;
-        this.rotate_CW = rotate_CW;
-        this.rotate_CW_value = rotate_CW_value;
         this.tilt_down = tilt_down;
         this.tilt_down_value = tilt_down_value;
         this.tilt_up = tilt_up;
         this.tilt_up_value = tilt_up_value;
+        this.rotate_CCW = rotate_CCW;
+        this.rotate_CCW_value = rotate_CCW_value;
+        this.rotate_CW = rotate_CW;
+        this.rotate_CW_value = rotate_CW_value;
         this.home = home;
         this.home_value = home_value;
         this.end = end;
         this.end_value = end_value;
-        this.joystick_frequency = joystick_frequency;
-        this.joystick_frequency_value = joystick_frequency_value;
-        this.top = top;
         this.top_value = top_value;
+        this.joystick_frequency_value = joystick_frequency_value;
     }
 
     public String getDistance() {
@@ -248,28 +244,12 @@ public class Setting {
         this.end_value = end_value;
     }
 
-    public String getJoystick_frequency() {
-        return joystick_frequency;
-    }
-
-    public void setJoystick_frequency(String joystick_frequency) {
-        this.joystick_frequency = joystick_frequency;
-    }
-
     public String getJoystick_frequency_value() {
         return joystick_frequency_value;
     }
 
     public void setJoystick_frequency_value(String joystick_frequency_value) {
         this.joystick_frequency_value = joystick_frequency_value;
-    }
-
-    public String getTop() {
-        return top;
-    }
-
-    public void setTop(String top) {
-        this.top = top;
     }
 
     public String getTop_value() {

@@ -22,13 +22,17 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.francesco.camslider.Database.DatabaseHelper;
 import com.francesco.camslider.GraphicLibraries.CounterHandler;
+import com.francesco.camslider.Objects.Setting;
 import com.francesco.camslider.R;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
 
 public class ManualActivity extends AppCompatActivity implements CounterHandler.CounterListener {
+
+    DatabaseHelper mDatabaseHelper;
 
     ImageButton timed;
     private static final char STOP_LINEAR_MOTOR = 'i';
@@ -42,6 +46,7 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
     private static final char TILT_UP = 'd';
     private static final char ROTATE_LEFT = 'e';
     private static final char ROTATE_RIGHT = 'f';
+    private static final char THIS_IS_ZERO = 'z';
 
     private static final int JOYSTICK_Hz = 5;
     private static final int JOYSTICK_MS = ( Math.round(((float) 1/(JOYSTICK_Hz))*1000));
@@ -58,7 +63,7 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
     private static final int TOTAL_DEGREE_ROTATION = 10;
     private final String TAG ="ManualActivity: ";
     TextView velocita_rotazione, rotazione, velocita_movimento, distanza, textView_tilting;
-    ImageButton zeroing, arrow_left, arrow_right, hide_texts, go_end, settings;
+    ImageButton zeroing, arrow_left, arrow_right, hide_texts, go_end, settings, this_is_zero;
     Long velox_angolo, velox_distanza;
     MainActivity mainActivity;
     Integer delay_time_angolo, delay_time_distanza;
@@ -67,8 +72,7 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
     Button linear_speed_1,linear_speed_2,linear_speed_3,linear_speed_4;
     Integer linear_speed=1, rotation_speed = 1 , tilting_speed = 4;
 
-
-    TextView textView01, textView02, textView03, textView04, textView05, textView06, textView07;
+    TextView distance_text, rotation_text , tilting_text, slide_left_text, slide_right_text, home_text, tilt_down_text, end_text, rotazione_ccw_text, rotazione_cw_text, tilt_up_text , distance_um,rotation_um, tilting_um;
 
     //Bluetooth setups
     String address = null , name = null;
@@ -84,15 +88,25 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
         setContentView(R.layout.activity_manual);
         timed = findViewById(R.id.bottom_timed);
 
-        textView01 = findViewById(R.id.textView01);
-        textView02 = findViewById(R.id.textView02);
-        textView03 = findViewById(R.id.textView03);
-        textView04 = findViewById(R.id.textView04);
-        textView05 = findViewById(R.id.textView05);
-        textView06 = findViewById(R.id.textView06);
-        textView07 = findViewById(R.id.textView07);
+        mDatabaseHelper = new DatabaseHelper(getApplicationContext());
+
+        end_text = findViewById(R.id.end_text);
+        home_text  = findViewById(R.id.home_text);
+        tilting_text  = findViewById(R.id.tilting_text);
+        rotation_text = findViewById(R.id.rotation_text);
+        distance_text = findViewById(R.id.distance_text);
+        rotazione_ccw_text = findViewById(R.id.rotazione_ccw_text);
+        tilt_down_text = findViewById(R.id.tilt_down_text);
+        rotazione_cw_text = findViewById(R.id.rotazione_cw_text);
+        slide_left_text = findViewById(R.id.slide_left_text);
+        slide_right_text = findViewById(R.id.slide_right_text);
+        tilt_up_text = findViewById(R.id.tilt_up_text);
         hide_texts = findViewById(R.id.hide_texts);
+        distance_um = findViewById(R.id.distance_um);
+        rotation_um= findViewById(R.id.rotation_um);
+        tilting_um= findViewById(R.id.tilting_um);
         text_hided = false;
+        this_is_zero = findViewById(R.id.button_this_is_zero);
 
 /*      linear_speed_1 = findViewById(R.id.linear_speed_1);
         linear_speed_2 = findViewById(R.id.linear_speed_2);
@@ -119,6 +133,8 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
         delay_time_distanza=1000;
         delay_time_angolo=1000;
 
+        populateFileds();
+
         //Bluetooth
         try {
             initializeBluetooth();
@@ -133,22 +149,24 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
             public void onClick(View view) {
                 if (!text_hided){
                     text_hided = true;
-                    textView01.setVisibility(View.INVISIBLE);
-                    textView02.setVisibility(View.INVISIBLE);
-                    textView03.setVisibility(View.INVISIBLE);
-                    textView04.setVisibility(View.INVISIBLE);
-                    textView05.setVisibility(View.INVISIBLE);
-                    textView06.setVisibility(View.INVISIBLE);
-                    textView07.setVisibility(View.INVISIBLE);
+
+                    rotazione_ccw_text.setVisibility(View.INVISIBLE);
+                    tilt_down_text  .setVisibility(View.INVISIBLE);
+                    rotazione_cw_text .setVisibility(View.INVISIBLE);
+                    slide_left_text .setVisibility(View.INVISIBLE);
+                    slide_right_text.setVisibility(View.INVISIBLE);
+                    tilt_up_text.setVisibility(View.INVISIBLE);
+
                 }else {
                     text_hided = false;
-                    textView01.setVisibility(View.VISIBLE);
-                    textView02.setVisibility(View.VISIBLE);
-                    textView03.setVisibility(View.VISIBLE);
-                    textView04.setVisibility(View.VISIBLE);
-                    textView05.setVisibility(View.VISIBLE);
-                    textView06.setVisibility(View.VISIBLE);
-                    textView07.setVisibility(View.VISIBLE);
+
+                    rotazione_ccw_text.setVisibility(View.VISIBLE);
+                    tilt_down_text  .setVisibility(View.VISIBLE);
+                    rotazione_cw_text .setVisibility(View.VISIBLE);
+                    slide_left_text .setVisibility(View.VISIBLE);
+                    slide_right_text.setVisibility(View.VISIBLE);
+                    tilt_up_text.setVisibility(View.VISIBLE);
+
                 }
             }
         });
@@ -358,6 +376,14 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
             });
 
 
+            this_is_zero.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    sendBluetoothMessage(THIS_IS_ZERO);
+                }
+            });
+
+
 
 
 
@@ -471,6 +497,29 @@ public class ManualActivity extends AppCompatActivity implements CounterHandler.
 
 
 
+
+
+
+    }
+
+    private void populateFileds() {
+
+        Setting setting = mDatabaseHelper.getSettings();
+        distance_text.setText(setting.getDistance());
+        rotation_text.setText(setting.getRotation());
+        tilt_up_text.setText(setting.getTilt_up());
+        distance_um.setText(setting.getDistance_um());
+        rotation_um.setText(setting.getRotation_um());
+        tilting_um.setText(setting.getTilting_um());
+        tilting_text.setText(setting.getTilting());
+        slide_left_text.setText(setting.getSlide_left());
+        slide_right_text.setText(setting.getSlide_right());
+        home_text.setText(setting.getHome());
+        tilt_down_text.setText(setting.getTilt_down());
+        end_text.setText(setting.getEnd());
+        rotazione_ccw_text.setText(setting.getRotate_CCW());
+        rotazione_cw_text.setText(setting.getRotate_CW());
+        tilt_up_text.setText(setting.getTilt_up());
 
 
 

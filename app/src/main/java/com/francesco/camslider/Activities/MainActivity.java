@@ -12,7 +12,9 @@ import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -31,17 +33,47 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 
+import io.github.controlwear.virtual.joystick.android.JoystickView;
+
 public class MainActivity extends AppCompatActivity {
-    private static final int ITEM_COUNT = 12;
-    private static final int TOTAL_DEGREE_ROTATION = 60;
+
     private final String TAG ="MainActivity: ";
     NumberPicker minuti, secondi;
-    SeekBar distanza;
-    TextView textview_distanza, text_distanza, text_angolo;
+
+    private static final char STOP_LINEAR_MOTOR = 'i';
+    private static final char STOP_ROTATION_MOTOR = 'm';
+    private static final char STOP_TILTING_MOTOR = 'l';
+    private static final char HOMING_SEQUENCE = 'g';
+    private static final char GO_END = 'h';
+    private static final char SLIDE_LEFT = 'a';
+    private static final char SLIDE_RIGHT = 'b';
+    private static final char TILT_DOWN = 'c';
+    private static final char TILT_UP = 'd';
+    private static final char ROTATE_LEFT = 'e';
+    private static final char ROTATE_RIGHT = 'f';
+
+    private static final int JOYSTICK_Hz = 5;
+    private static final int JOYSTICK_MS = ( Math.round(((float) 1/(JOYSTICK_Hz))*1000));
+
+
+    private static final int LINEAR_Hz = 2;
+    private static final int LINEAR_MS = ( Math.round(((float) 1/(LINEAR_Hz))*1000));
+
+
+    private static final int ARDUINO_DELAY_TIME = 0;
+
+
+
+    TextView textview_distanza, text_distanza;
     Integer timer_tot_sec, int_distanza_inizio, int_distanza_fine =0;
     Button start, inizio, fine;
     ImageButton manual;
     Boolean distanza_state_inizio, angolo_state_inizio,  hasSetStart, hasSetEnd;
+    Integer lastAngle ;
+    ImageButton  arrow_left, arrow_right;
+    Button linear_speed_1,linear_speed_2,linear_speed_3,linear_speed_4;
+    Integer linear_speed=1;
+
 
     //Bluetooth setups
     String address = null , name = null;
@@ -51,27 +83,19 @@ public class MainActivity extends AppCompatActivity {
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final WheelView wheelView = (WheelView) findViewById(R.id.wheelviewLineare);
-        wheelView.setWheelItemCount(ITEM_COUNT);
-        final ShapeDrawable[] shapeDrawables = new ShapeDrawable[ITEM_COUNT];
-        textview_distanza = findViewById(R.id.textView_distanza);
         text_distanza = findViewById(R.id.text_distanza);
-        text_angolo = findViewById(R.id.text_angolo);
-
-
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-
-
         distanza_state_inizio = true;
         angolo_state_inizio = true;
         hasSetEnd=false;
         hasSetStart=false;
-        int_distanza_fine=0;
-        int_distanza_inizio=0;
+        JoystickView joystick;
+        joystick = (JoystickView) findViewById(R.id.joystickView_auto);
 
         //Bluetooth
         try {
@@ -80,155 +104,34 @@ public class MainActivity extends AppCompatActivity {
            // Log.d(TAG, "onCreate: ERRORE INCREDIBILE while SETTING UP BLUETOOTH");
         }
 
-
         //Buttons
-        start = findViewById(R.id.inizia_sessione);
+        start = findViewById(R.id.settings_save);
         inizio = findViewById(R.id.button_inizio);
         fine = findViewById(R.id.button_fine);
         manual = findViewById(R.id.bluetooth);
+        arrow_left= findViewById(R.id.auto_arrow_left);
+        arrow_right= findViewById(R.id.auto_arrow_right);
+
+        linear_speed_1 = findViewById(R.id.linear_speed_1);
+        linear_speed_2 = findViewById(R.id.linear_speed_2);
+        linear_speed_3 = findViewById(R.id.linear_speed_3);
+        linear_speed_4 = findViewById(R.id.linear_speed_4);
 
 
-        inizio.setBackgroundResource((R.drawable.button_blue_background));
-
-
-        // Number Pickers
-        minuti = findViewById(R.id.numberPicker_minuti);
-        secondi = findViewById(R.id.numberPicker_secondi);
-        minuti.setMinValue(0);
-        minuti.setMaxValue(59);
-        secondi.setMinValue(0);
-        secondi.setMaxValue(59);
-
-
-
-
-        // Seekbar
-        distanza = findViewById(R.id.seekBar_distanza);
-        distanza.setMax(200);
-        distanza.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-
-                textview_distanza.setText(from_int_to_StringFloat(i));
-                if (distanza_state_inizio){
-                    sendBluetoothMessage(i);
-                }else {
-                    sendBluetoothMessage(i+1000);
-                }
-
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-
-                if (distanza_state_inizio){
-                    hasSetStart=true;
-                    int_distanza_inizio = distanza.getProgress();
-                  //  Log.d(TAG, "onStopTrackingTouch: "+int_distanza_inizio);
-                }else {
-                    hasSetEnd=true;
-                    int_distanza_fine = distanza.getProgress();
-                  //  Log.d(TAG, "onStopTrackingTouch: "+int_distanza_fine);
-                }
-
-            }
-        });
-
-        for (int i =0; i<ITEM_COUNT; i++){
-            shapeDrawables[i] = new ShapeDrawable( new OvalShape());
-            shapeDrawables[i].getPaint().setColor(getResources().getColor(R.color.transparent));
-
-        }
-
-
-        wheelView.setAdapter(new WheelAdapter() {
-            @Override
-            public Drawable getDrawable(int position) {
-                //return drawable here - the position can be seen in the gifs above
-                Drawable[] drawable = new Drawable[] {
-
-                        shapeDrawables[position],
-                        new TextDrawable(String.valueOf(positionToDegree(position)))
-                };
-                return new LayerDrawable(drawable);
-
-            }
-
-            @Override
-            public int getCount() {
-                //return the count
-                return ITEM_COUNT;
-            }
-        });
-
-/*
-        wheelView.setOnWheelItemSelectedListener(new WheelView.OnWheelItemSelectListener() {
-            int num_precedente =0;
-            @Override
-            public void onWheelItemSelected(WheelView parent,  Drawable itemDrawable, int position) {
-                //the adapter position that is closest to the selection angle and it's drawable
-             //   Log.d(TAG, "onWheelItemSelected: position:" + position);
-
-                if (angolo_state_inizio){
-                   // Log.d(TAG, "onWheelItemSelected: inizio con angolo");
-                    sendBluetoothMessage(2000+(position*(TOTAL_DEGREE_ROTATION/ITEM_COUNT)));
-                }else {
-                  //  Log.d(TAG, "onWheelItemSelected: fine con angolo");
-                    sendBluetoothMessage(3000+(position*(TOTAL_DEGREE_ROTATION/ITEM_COUNT)));
-                }
-
-            }
-        });
-*/
-
-
-        wheelView.setOnWheelAngleChangeListener(new WheelView.OnWheelAngleChangeListener() {
-            @Override
-            public void onWheelAngleChange(float angle) {
-              //  Log.d(TAG, "onWheelAngleChange: angle: "+Math.round(angle));
-                int rounded = Math.round(angle);
-                //the new angle of the wheel
-                if (angolo_state_inizio){
-                //    Log.d(TAG, "onWheelItemSelected: inizio con angolo");
-                    sendBluetoothMessage(2360+(rounded));
-                }else {
-                 //   Log.d(TAG, "onWheelItemSelected: fine con angolo");
-                    sendBluetoothMessage(3360+(rounded));
-                }
-
-
-
-            }
-        });
-
+        //      inizio.setBackgroundResource((R.drawable.button_blue_background));
 
 
         inizio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                inizio.setBackgroundResource((R.drawable.button_blue_background));
-                fine.setBackgroundResource((R.drawable.button_white_background));
+  //              inizio.setBackgroundResource((R.drawable.button_white_background));
+  //              fine.setBackgroundResource((R.drawable.button_blue_background));
 
                 distanza_state_inizio = true;
                 angolo_state_inizio = true;
-                text_angolo.setText(getResources().getString(R.string.angolo_camera_di_inizio));
                 text_distanza.setText(getResources().getString(R.string.distanza_inizio));
                // Log.d(TAG, "onClick: int_distanza_inizio:"+int_distanza_inizio);
-                if (hasSetStart){
-                    textview_distanza.setText(from_int_to_StringFloat(int_distanza_inizio));
-                    distanza.setProgress(int_distanza_inizio);
-
-                }else {
-                    textview_distanza.setText("0.00");
-                    distanza.setProgress(0);
-                }
 
             }
         });
@@ -237,21 +140,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                fine.setBackgroundResource((R.drawable.button_blue_background));
-                inizio.setBackgroundResource((R.drawable.button_white_background));
+     //           fine.setBackgroundResource((R.drawable.button_white_background));
+     //           inizio.setBackgroundResource((R.drawable.button_blue_background));
                 // mi treovo nella parte di dichiarazione finale
                 distanza_state_inizio =    false;
                 angolo_state_inizio = false;
-                text_angolo.setText(getResources().getString(R.string.angolo_camera_di_fine));
                 text_distanza.setText(getResources().getString(R.string.distanza_fine));
-                //resetto il visualizzatore di distanza
-                if (hasSetEnd){
-                    textview_distanza.setText(from_int_to_StringFloat(int_distanza_fine));
-                    distanza.setProgress(int_distanza_fine);
-                }else {
-                    textview_distanza.setText("2.00");
-                    distanza.setProgress(200);
-                }
+
 
             }
         });
@@ -271,41 +166,175 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+        // ---------------------------------------------------------------------------------------------------------------------- arrows ---------------------------------------------------------------------------------------------------------------------
+
+        arrow_right.setOnTouchListener(new View.OnTouchListener() {
+
+            private Handler mHandler;
+
+            @Override public boolean onTouch(View v, MotionEvent event) {
+                switch(event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        Log.d(TAG, "onTouch: pressed");
+                        sendBluetoothMessage(SLIDE_RIGHT);
+                        if (mHandler != null) return true;
+                        mHandler = new Handler();
+                        mHandler.postDelayed(mAction, ARDUINO_DELAY_TIME);
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        Log.d(TAG, "onTouch: unpressed");
+
+                        sendBluetoothMessage(STOP_LINEAR_MOTOR);
+                        if (mHandler == null) return true;
+                        mHandler.removeCallbacks(mAction);
+                        mHandler = null;
+                        break;
+                }
+                return false;
+            }
+
+            Runnable mAction = new Runnable() {
+                @Override public void run() {
+                    mHandler.postDelayed(this, LINEAR_MS);
+                }
+            };
+
+        });
+
+
+        arrow_left.setOnTouchListener(new View.OnTouchListener() {
+
+            private Handler mHandler;
+
+            @Override public boolean onTouch(View v, MotionEvent event) {
+                switch(event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        Log.d(TAG, "onTouch: pressed");
+                        sendBluetoothMessage(SLIDE_LEFT);
+                        if (mHandler != null) return true;
+                        mHandler = new Handler();
+                        mHandler.postDelayed(mAction, ARDUINO_DELAY_TIME);
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        Log.d(TAG, "onTouch: unpressed");
+                        sendBluetoothMessage(STOP_LINEAR_MOTOR);
+                        if (mHandler == null) return true;
+                        mHandler.removeCallbacks(mAction);
+                        mHandler = null;
+                        break;
+                }
+                return false;
+            }
+
+            Runnable mAction = new Runnable() {
+                @Override public void run() {
+                    mHandler.postDelayed(this, LINEAR_MS);
+                }
+            };
+
+        });
+
+
+        // ---------------------------------------------------------------------------------------------------------------------- joystick ---------------------------------------------------------------------------------------------------------------------
+
+        joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
+            @Override
+            public void onMove(int angle, int strength) {
+                // Log.d(TAG, "onMove: angle: "+angle + " - strenght: " + strength);
+
+                if (angle == 0 || strength == 0){
+                    sendBluetoothMessage(STOP_ROTATION_MOTOR);
+                    sendBluetoothMessage(STOP_TILTING_MOTOR);
+                }
+
+                if (angle > 0 && angle < 45 || angle > 315 ){
+                    sendBluetoothMessage(ROTATE_RIGHT);
+                }else if(angle > 45 && angle < 135){
+                    sendBluetoothMessage(TILT_UP);
+                }else if(angle > 135 && angle < 225){
+                    sendBluetoothMessage(ROTATE_LEFT);
+                }else if (angle > 225 && angle < 315){
+                    sendBluetoothMessage(TILT_DOWN);
+                }
+
+            }
+        },JOYSTICK_MS);
+
+
+        // ---------------------------------------------------------------------------------------------------------------------- bottoni speed ---------------------------------------------------------------------------------------------------------------------
+
+        linear_speed_1.setBackgroundResource(R.drawable.button_blue_background);
+
+        linear_speed_1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                linear_speed_1.setBackgroundResource(R.drawable.button_blue_background);
+                linear_speed_2.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_3.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_4.setBackgroundResource(R.drawable.button_white_background);
+
+                linear_speed = 1;
+            }
+        });
+        linear_speed_2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                linear_speed_1.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_2.setBackgroundResource(R.drawable.button_blue_background);
+                linear_speed_3.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_4.setBackgroundResource(R.drawable.button_white_background);
+
+                linear_speed = 2;
+            }
+        });
+        linear_speed_3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                linear_speed_1.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_2.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_3.setBackgroundResource(R.drawable.button_blue_background);
+                linear_speed_4.setBackgroundResource(R.drawable.button_white_background);
+
+                linear_speed = 3;
+            }
+        });
+        linear_speed_4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                linear_speed_1.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_2.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_3.setBackgroundResource(R.drawable.button_white_background);
+                linear_speed_4.setBackgroundResource(R.drawable.button_blue_background);
+
+                linear_speed = 4;
+            }
+        });
+
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private void initializeBluetooth() throws IOException {
         bluetooth_connect_device();
-        start=(Button)findViewById(R.id.inizia_sessione);
+        start=(Button)findViewById(R.id.settings_save);
 
         start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                timer_tot_sec = (minuti.getValue())*60 + secondi.getValue();
-                int diff_distance = int_distanza_fine-int_distanza_inizio;
-              //  Log.d(TAG, "onClick: timer_tot_sec:" + timer_tot_sec);
-                if (timer_tot_sec < 10){
-                    Toast.makeText(MainActivity.this, "Minimo possibile: 10 secondi",
-                            Toast.LENGTH_LONG).show();
-                    if(diff_distance<0){
-                        Toast.makeText(MainActivity.this, "L'inizio dev'essere prima della fine",
-                                Toast.LENGTH_LONG).show();
-                    }
+                if (linear_speed==1){
+                    sendBluetoothMessage('p');
+                }else if (linear_speed==2){
+                    sendBluetoothMessage('q');
+                }else if (linear_speed==2){
+                    sendBluetoothMessage('r');
+                }else if (linear_speed==2){
+                    sendBluetoothMessage('s');
                 }
-                if (timer_tot_sec > 10 && diff_distance >0){
 
-                    //Bluetooth shit
-                //    Log.d(TAG, "onClick: sending bluetooth message: timer_tot_sec, CODE:"+timer_tot_sec);
-                    sendBluetoothMessage(timer_tot_sec+4000);
-                    //sendBluetoothMessage(1);
-
-                    //Bluetooth shit
-
-                    Toast.makeText(MainActivity.this, "Inviando impostazioni, inizio sessione",
-                            Toast.LENGTH_LONG).show();
-                }
             }
         });
+
+
 
     }
 
@@ -339,13 +368,13 @@ public class MainActivity extends AppCompatActivity {
         catch(Exception e){}
     }
 
-    public void sendBluetoothMessage(Integer i) {
+    public void sendBluetoothMessage(char i) {
         try
         {
             if (btSocket!=null)
             {
                 Log.d(TAG, "sendBluetoothMessage: SENDING DATA VIA BLUETOOTH, CODE: "+i);
-                btSocket.getOutputStream().write(i.toString().getBytes());
+                btSocket.getOutputStream().write(String.valueOf(i).getBytes());
             }
 
         }
@@ -356,14 +385,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public int positionToDegree(int position){
-        if (position == 0){
-            return 0;}
-        else {
-            return position*(TOTAL_DEGREE_ROTATION/ITEM_COUNT);
-        }
-
-    }
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
@@ -385,9 +406,6 @@ public class MainActivity extends AppCompatActivity {
         String myString = savedInstanceState.getString("MyString");*/
     }
 
-    public String from_int_to_StringFloat(int distance_cm){
-        return String.valueOf(distance_cm/100+"."+String.format("%02d", distance_cm%100));
-    }
 
 
 

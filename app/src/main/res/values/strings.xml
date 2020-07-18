@@ -1,9 +1,9 @@
 <resources>
     <string name="app_name">BREA</string>
-    <string name="angolo_camera_di_inizio">Angolo camera di inizio</string>
-    <string name="angolo_camera_di_fine">Angolo camera di fine</string>
-    <string name="distanza_inizio">Distanza inizio</string>
-    <string name="distanza_fine">Distanza fine</string>
+    <string name="angolo_camera_di_inizio">Rotation start point</string>
+    <string name="angolo_camera_di_fine">Rotation finish point</string>
+    <string name="distanza_inizio">Start distance, angle, tilt of the camera</string>
+    <string name="distanza_fine">Finish distance, angle, tilt of the camera</string>
     <string name="distance">Distance</string>
     <string name="rotation">Rotation</string>
 </resources>

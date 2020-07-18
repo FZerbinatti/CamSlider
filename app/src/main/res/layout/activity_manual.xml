@@ -42,7 +42,18 @@ android:background="@color/black">
             app:layout_constraintTop_toTopOf="@+id/constraintLayout4">
 
             <TextView
-                android:id="@+id/textView12"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Control Panel"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="5dp"/>
+
+            <TextView
+                android:id="@+id/distance_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
@@ -50,7 +61,7 @@ android:background="@color/black">
                 android:text="@string/distance"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/textView9"
+                app:layout_constraintEnd_toStartOf="@+id/rotation_text"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -62,23 +73,23 @@ android:background="@color/black">
                 android:text="0"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="@+id/textView12"
-                app:layout_constraintStart_toStartOf="@+id/textView12"
-                app:layout_constraintTop_toBottomOf="@+id/textView12" />
+                app:layout_constraintEnd_toEndOf="@+id/distance_text"
+                app:layout_constraintStart_toStartOf="@+id/distance_text"
+                app:layout_constraintTop_toBottomOf="@+id/distance_text" />
 
 
             <TextView
-                android:id="@+id/textView18"
+                android:id="@+id/distance_um"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=" cm"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="@+id/textView_movimento"
                 app:layout_constraintStart_toEndOf="@+id/textView_movimento"
-                app:layout_constraintTop_toBottomOf="@+id/textView12" />
+                app:layout_constraintTop_toBottomOf="@+id/distance_text" />
 
             <TextView
-                android:id="@+id/textView9"
+                android:id="@+id/rotation_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
@@ -86,9 +97,9 @@ android:background="@color/black">
 
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/textView91"
+                app:layout_constraintEnd_toStartOf="@+id/tilting_text"
                 app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/textView12"
+                app:layout_constraintStart_toEndOf="@+id/distance_text"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
@@ -98,23 +109,23 @@ android:background="@color/black">
                 android:text="0"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="@+id/textView9"
-                app:layout_constraintStart_toStartOf="@+id/textView9"
-                app:layout_constraintTop_toBottomOf="@+id/textView9" />
+                app:layout_constraintEnd_toEndOf="@+id/rotation_text"
+                app:layout_constraintStart_toStartOf="@+id/rotation_text"
+                app:layout_constraintTop_toBottomOf="@+id/rotation_text" />
 
             <TextView
-                android:id="@+id/textView19"
+                android:id="@+id/rotation_um"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=" °"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="@+id/textView_rotazione"
                 app:layout_constraintStart_toEndOf="@+id/textView_rotazione"
-                app:layout_constraintTop_toBottomOf="@+id/textView9" />
+                app:layout_constraintTop_toBottomOf="@+id/rotation_text" />
 
 
             <TextView
-                android:id="@+id/textView91"
+                android:id="@+id/tilting_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
@@ -124,7 +135,7 @@ android:background="@color/black">
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/textView9"
+                app:layout_constraintStart_toEndOf="@+id/rotation_text"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
@@ -134,17 +145,17 @@ android:background="@color/black">
                 android:text="0"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="@+id/textView91"
-                app:layout_constraintStart_toStartOf="@+id/textView91"
-                app:layout_constraintTop_toBottomOf="@+id/textView91" />
+                app:layout_constraintEnd_toEndOf="@+id/tilting_text"
+                app:layout_constraintStart_toStartOf="@+id/tilting_text"
+                app:layout_constraintTop_toBottomOf="@+id/tilting_text" />
 
             <TextView
-                android:id="@+id/textView191"
+                android:id="@+id/tilting_um"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=" °"
                 android:textSize="20sp"
-                app:layout_constraintBottom_toBottomOf="@+id/textView91"
+                app:layout_constraintBottom_toBottomOf="@+id/tilting_text"
                 app:layout_constraintStart_toEndOf="@+id/textView_tilting"
                 app:layout_constraintTop_toBottomOf="@+id/textView_tilting" />
 
@@ -210,44 +221,44 @@ android:background="@color/black">
             app:layout_constraintTop_toBottomOf="@+id/constraintLayout6" />-->
 
         <TextView
-            android:id="@+id/textView03"
+            android:id="@+id/tilt_down_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tilt Down"
             app:layout_constraintBottom_toTopOf="@+id/joystickView"
-            app:layout_constraintEnd_toStartOf="@+id/textView04"
+            app:layout_constraintEnd_toStartOf="@+id/rotazione_cw_text"
             app:layout_constraintStart_toStartOf="@+id/joystickView" />
 
         <TextView
-            android:id="@+id/textView07"
+            android:id="@+id/tilt_up_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tilt Up"
-            app:layout_constraintEnd_toStartOf="@+id/textView04"
+            app:layout_constraintEnd_toStartOf="@+id/rotazione_cw_text"
             app:layout_constraintStart_toStartOf="@+id/joystickView"
             app:layout_constraintTop_toBottomOf="@+id/joystickView" />
 
         <TextView
-            android:id="@+id/textView15"
+            android:id="@+id/home_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:text="Home"
             app:layout_constraintBottom_toTopOf="@+id/button_zeroing"
-            app:layout_constraintEnd_toEndOf="@+id/button_zeroing"
-            app:layout_constraintStart_toStartOf="@+id/button_zeroing" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
-            android:id="@+id/textView16"
+            android:id="@+id/end_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="End"
+            android:layout_marginEnd="10dp"
             app:layout_constraintBottom_toTopOf="@+id/go_end"
             app:layout_constraintEnd_toEndOf="@+id/go_end"
-            app:layout_constraintStart_toStartOf="@+id/go_end" />
+             />
 
         <TextView
-            android:id="@+id/textView05"
+            android:id="@+id/slide_left_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Slide Left"
@@ -255,7 +266,7 @@ android:background="@color/black">
             app:layout_constraintTop_toBottomOf="@+id/constraintLayout5" />
 
         <TextView
-            android:id="@+id/textView06"
+            android:id="@+id/slide_right_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Slide Right"
@@ -264,7 +275,7 @@ android:background="@color/black">
 
 
         <TextView
-            android:id="@+id/textView02"
+            android:id="@+id/rotazione_ccw_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Rotazione CCW"
@@ -273,7 +284,7 @@ android:background="@color/black">
             app:layout_constraintTop_toTopOf="@+id/joystickView" />
 
         <TextView
-            android:id="@+id/textView04"
+            android:id="@+id/rotazione_cw_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Rotazione CW"
@@ -289,7 +300,7 @@ android:background="@color/black">
             android:layout_marginHorizontal="30dp"
             android:layout_marginBottom="30dp"
             android:background="@drawable/button_grey_background"
-            app:layout_constraintBottom_toTopOf="@+id/textView03"
+            app:layout_constraintBottom_toTopOf="@+id/tilt_down_text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/constraintLayout6">
@@ -339,7 +350,18 @@ android:background="@color/black">
             android:src="@drawable/ic_3d_reset"
             android:text="start"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView03" />
+            app:layout_constraintTop_toBottomOf="@+id/tilt_down_text" />
+
+
+        <ImageButton
+            android:id="@+id/button_this_is_zero"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/button_white_background"
+            android:src="@drawable/ic_icon_zero"
+            app:layout_constraintBottom_toTopOf="@+id/constraintLayout5"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
 
         <io.github.controlwear.virtual.joystick.android.JoystickView
@@ -387,7 +409,7 @@ android:background="@color/black">
             android:src="@drawable/ic_end"
             android:text="start"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView03" />
+            app:layout_constraintTop_toBottomOf="@+id/tilt_down_text" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
