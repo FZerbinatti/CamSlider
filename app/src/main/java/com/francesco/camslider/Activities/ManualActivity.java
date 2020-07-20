@@ -510,8 +510,8 @@ public class ManualActivity extends AppCompatActivity  {
         }
         catch (Exception e)
         {
-
-            Toast.makeText(getApplicationContext(),e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "sendBluetoothMessage: BrokenPipe");
+            //Toast.makeText(getApplicationContext(),e.getMessage(), Toast.LENGTH_SHORT).show();
         }
 
     }
