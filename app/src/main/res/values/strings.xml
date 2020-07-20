@@ -6,4 +6,6 @@
     <string name="distanza_fine">Finish distance, angle, tilt of the camera</string>
     <string name="distance">Distance</string>
     <string name="rotation">Rotation</string>
+    <string name="settings_error">Arduino code value must be a single Character value</string>
+    <string name="settings_good_result"><![CDATA[Fields & values updated.]]></string>
 </resources>

@@ -299,7 +299,6 @@
             android:id="@+id/settings_slide_v7"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
             android:gravity="center"
             android:text="g"
             android:textSize="18sp"

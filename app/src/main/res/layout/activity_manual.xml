@@ -352,14 +352,6 @@ android:background="@color/black">
             app:layout_constraintTop_toBottomOf="@+id/tilt_down_text" />
 
 
-        <ImageButton
-            android:id="@+id/button_this_is_zero"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@drawable/button_white_background"
-            android:src="@drawable/ic_icon_zero"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
 
 
         <io.github.controlwear.virtual.joystick.android.JoystickView

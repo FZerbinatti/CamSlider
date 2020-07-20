@@ -10,8 +10,6 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 import android.content.Intent;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.OvalShape;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -35,25 +33,24 @@ public class ManualActivity extends AppCompatActivity  {
     DatabaseHelper mDatabaseHelper;
 
     ImageButton timed;
-    private static final char STOP_LINEAR_MOTOR = 'i';
-    private static final char STOP_ROTATION_MOTOR = 'm';
-    private static final char STOP_TILTING_MOTOR = 'l';
-    private static final char HOMING_SEQUENCE = 'g';
-    private static final char GO_END = 'h';
-    private static final char SLIDE_LEFT = 'a';
-    private static final char SLIDE_RIGHT = 'b';
-    private static final char TILT_DOWN = 'c';
-    private static final char TILT_UP = 'd';
-    private static final char ROTATE_LEFT = 'e';
-    private static final char ROTATE_RIGHT = 'f';
-    private static final char THIS_IS_ZERO = 'z';
+    private static  String STOP_LINEAR_MOTOR = "i";
+    private static  String STOP_ROTATION_MOTOR = "m";
+    private static  String STOP_TILTING_MOTOR = "l";
+    private static  String GO_HOME_VALUE = "g";
+    private static  String GO_END_VALUE = "h";
+    private static  String SLIDE_LEFT_VALUE = "a";
+    private static  String SLIDE_RIGHT_VALUE = "b";
+    private static  String TILT_DOWN_VALUE = "c";
+    private static  String TILT_UP_VALUE = "d";
+    private static  String ROTATE_CCW_VALUE = "e";
+    private static  String ROTATE_CW_VALUE = "f";
 
-    private static final int JOYSTICK_Hz = 5;
-    private static final int JOYSTICK_MS = ( Math.round(((float) 1/(JOYSTICK_Hz))*1000));
+    private static final int JOYSTICK_FREQUENCY_VALUE = 5;
+    private static final int JOYSTICK_MS = ( Math.round(((float) 1/(JOYSTICK_FREQUENCY_VALUE))*1000));
 
 
-    private static final int LINEAR_Hz = 2;
-    private static final int LINEAR_MS = ( Math.round(((float) 1/(LINEAR_Hz))*1000));
+    private static final int SLIDE_FREQUENCY_VALUE = 2;
+    private static final int LINEAR_MS = ( Math.round(((float) 1/(SLIDE_FREQUENCY_VALUE))*1000));
 
 
     private static final int ARDUINO_DELAY_TIME = 0;
@@ -68,7 +65,6 @@ public class ManualActivity extends AppCompatActivity  {
     Integer delay_time_angolo, delay_time_distanza;
     Boolean text_hided;
     JoystickView joystick;
-    Button linear_speed_1,linear_speed_2,linear_speed_3,linear_speed_4;
     Integer linear_speed=1, rotation_speed = 1 , tilting_speed = 4;
 
     TextView distance_text, rotation_text , tilting_text, slide_left_text, slide_right_text, home_text, tilt_down_text, end_text, rotazione_ccw_text, rotazione_cw_text, tilt_up_text , distance_um,rotation_um, tilting_um;
@@ -88,6 +84,8 @@ public class ManualActivity extends AppCompatActivity  {
 
         mDatabaseHelper = new DatabaseHelper(getApplicationContext());
 
+        mDatabaseHelper = new DatabaseHelper(getApplicationContext());
+
         end_text = findViewById(R.id.end_text);
         home_text  = findViewById(R.id.home_text);
         tilting_text  = findViewById(R.id.tilting_text);
@@ -104,19 +102,22 @@ public class ManualActivity extends AppCompatActivity  {
         rotation_um= findViewById(R.id.rotation_um);
         tilting_um= findViewById(R.id.tilting_um);
         text_hided = false;
-        this_is_zero = findViewById(R.id.button_this_is_zero);
 
-/*      linear_speed_1 = findViewById(R.id.linear_speed_1);
-        linear_speed_2 = findViewById(R.id.linear_speed_2);
-        linear_speed_3 = findViewById(R.id.linear_speed_3);
-        linear_speed_4 = findViewById(R.id.linear_speed_4);*/
-
-/*        velocita_movimento = findViewById(R.id.textView_velocitaMovimento);
-        velocita_rotazione = findViewById(R.id.textView_velocitaRotazione);*/
         rotazione = findViewById(R.id.textView_rotazione);
         distanza = findViewById(R.id.textView_movimento);
         textView_tilting = findViewById(R.id.textView_tilting);
         settings = findViewById(R.id.button_settings);
+
+        Setting savedSettings =  mDatabaseHelper.getSettings();
+
+        GO_HOME_VALUE = savedSettings.getHome_value();
+        GO_END_VALUE =savedSettings.getEnd_value();
+        SLIDE_LEFT_VALUE = savedSettings.getSlide_left_value();
+        SLIDE_RIGHT_VALUE = savedSettings.getSlide_right_value();
+        TILT_DOWN_VALUE = savedSettings.getTilt_down_value();
+        TILT_UP_VALUE = savedSettings.getTilt_up_value();
+        ROTATE_CCW_VALUE = savedSettings.getRotate_CCW_value();
+        ROTATE_CW_VALUE = savedSettings.getRotate_CW_value();
 
 
         zeroing= findViewById(R.id. button_zeroing);
@@ -137,10 +138,9 @@ public class ManualActivity extends AppCompatActivity  {
         try {
             initializeBluetooth();
         } catch (Exception e) {
-            // Log.d(TAG, "onCreate: ERRORE INCREDIBILE while SETTING UP BLUETOOTH");
+             Log.d(TAG, "onCreate: Bluetooth related error");
         }
 
-        final ShapeDrawable[] shapeDrawables = new ShapeDrawable[ITEM_COUNT];
 
         hide_texts.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -181,69 +181,10 @@ public class ManualActivity extends AppCompatActivity  {
         go_end.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sendBluetoothMessage(GO_END);
+                sendBluetoothMessage(GO_END_VALUE);
             }
         });
 
-
-
-
-        for (int i =0; i<ITEM_COUNT; i++){
-            shapeDrawables[i] = new ShapeDrawable( new OvalShape());
-            shapeDrawables[i].getPaint().setColor(getResources().getColor(R.color.transparent));
-
-        }
-
-/*
-        // ---------------------------------------------------------------------------------------------------------------------- bottoni speed ---------------------------------------------------------------------------------------------------------------------
-
-        linear_speed_1.setBackgroundResource(R.drawable.button_blue_background);
-
-        linear_speed_1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                linear_speed_1.setBackgroundResource(R.drawable.button_blue_background);
-                linear_speed_2.setBackgroundResource(R.drawable.button_white_background);
-                linear_speed_3.setBackgroundResource(R.drawable.button_white_background);
-                linear_speed_4.setBackgroundResource(R.drawable.button_white_background);
-
-                linear_speed = 1;
-            }
-        });
-        linear_speed_2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                linear_speed_1.setBackgroundResource(R.drawable.button_white_background);
-                linear_speed_2.setBackgroundResource(R.drawable.button_blue_background);
-                linear_speed_3.setBackgroundResource(R.drawable.button_white_background);
-                linear_speed_4.setBackgroundResource(R.drawable.button_white_background);
-
-                linear_speed = 2;
-            }
-        });
-        linear_speed_3.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                linear_speed_1.setBackgroundResource(R.drawable.button_white_background);
-                linear_speed_2.setBackgroundResource(R.drawable.button_white_background);
-                linear_speed_3.setBackgroundResource(R.drawable.button_blue_background);
-                linear_speed_4.setBackgroundResource(R.drawable.button_white_background);
-
-                linear_speed = 3;
-            }
-        });
-        linear_speed_4.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                linear_speed_1.setBackgroundResource(R.drawable.button_white_background);
-                linear_speed_2.setBackgroundResource(R.drawable.button_white_background);
-                linear_speed_3.setBackgroundResource(R.drawable.button_white_background);
-                linear_speed_4.setBackgroundResource(R.drawable.button_blue_background);
-
-                linear_speed = 4;
-            }
-        });
-*/
 
         // ---------------------------------------------------------------------------------------------------------------------- joystick ---------------------------------------------------------------------------------------------------------------------
 
@@ -258,16 +199,16 @@ public class ManualActivity extends AppCompatActivity  {
                 }
 
                 if (angle > 0 && angle < 45 || angle > 315 ){
-                   sendBluetoothMessage(ROTATE_RIGHT);
+                   sendBluetoothMessage(ROTATE_CW_VALUE);
                     rotazione.setText(String.valueOf(Integer.valueOf(rotazione.getText().toString())+1));
                  }else if(angle > 45 && angle < 135){
-                   sendBluetoothMessage(TILT_UP);
+                   sendBluetoothMessage(TILT_UP_VALUE);
                     textView_tilting.setText(String.valueOf(Integer.valueOf(textView_tilting.getText().toString())+1));
                  }else if(angle > 135 && angle < 225){
-                   sendBluetoothMessage(ROTATE_LEFT);
+                   sendBluetoothMessage(ROTATE_CCW_VALUE);
                     rotazione.setText(String.valueOf(Integer.valueOf(rotazione.getText().toString())-1));
                  }else if (angle > 225 && angle < 315){
-                   sendBluetoothMessage(TILT_DOWN);
+                   sendBluetoothMessage(TILT_DOWN_VALUE);
                     textView_tilting.setText(String.valueOf(Integer.valueOf(textView_tilting.getText().toString())-1));
                  }
 
@@ -288,7 +229,7 @@ public class ManualActivity extends AppCompatActivity  {
                 switch(event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         Log.d(TAG, "onTouch: pressed");
-                        sendBluetoothMessage(SLIDE_RIGHT);
+                        sendBluetoothMessage(SLIDE_RIGHT_VALUE);
                         if (mHandler != null) return true;
                         mHandler = new Handler();
                         mHandler.postDelayed(mAction, ARDUINO_DELAY_TIME);
@@ -325,7 +266,7 @@ public class ManualActivity extends AppCompatActivity  {
                     switch(event.getAction()) {
                         case MotionEvent.ACTION_DOWN:
                             Log.d(TAG, "onTouch: pressed");
-                            sendBluetoothMessage(SLIDE_LEFT);
+                            sendBluetoothMessage(SLIDE_LEFT_VALUE);
                             if (mHandler != null) return true;
                             mHandler = new Handler();
                             mHandler.postDelayed(mAction, ARDUINO_DELAY_TIME);
@@ -359,12 +300,6 @@ public class ManualActivity extends AppCompatActivity  {
             });
 
 
-            this_is_zero.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    sendBluetoothMessage(THIS_IS_ZERO);
-                }
-            });
 
 
 
@@ -374,7 +309,7 @@ public class ManualActivity extends AppCompatActivity  {
         zeroing.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sendBluetoothMessage(HOMING_SEQUENCE);
+                sendBluetoothMessage(GO_HOME_VALUE);
                 final int value = Integer.valueOf(distanza.getText().toString());
                 Thread t=new Thread(){
                     @Override
@@ -478,9 +413,21 @@ public class ManualActivity extends AppCompatActivity  {
             }
         });
 
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Setting savedSettings =  mDatabaseHelper.getSettings();
 
-
+        GO_HOME_VALUE = savedSettings.getHome_value();
+        GO_END_VALUE =savedSettings.getEnd_value();
+        SLIDE_LEFT_VALUE = savedSettings.getSlide_left_value();
+        SLIDE_RIGHT_VALUE = savedSettings.getSlide_right_value();
+        TILT_DOWN_VALUE = savedSettings.getTilt_down_value();
+        TILT_UP_VALUE = savedSettings.getTilt_up_value();
+        ROTATE_CCW_VALUE = savedSettings.getRotate_CCW_value();
+        ROTATE_CW_VALUE = savedSettings.getRotate_CW_value();
 
 
     }
@@ -503,8 +450,6 @@ public class ManualActivity extends AppCompatActivity  {
         rotazione_ccw_text.setText(setting.getRotate_CCW());
         rotazione_cw_text.setText(setting.getRotate_CW());
         tilt_up_text.setText(setting.getTilt_up());
-
-
 
     }
 
@@ -530,7 +475,7 @@ public class ManualActivity extends AppCompatActivity  {
                 {
                     address=bt.getAddress().toString();
                     name = bt.getName().toString();
-                    Toast.makeText(getApplicationContext(),"Connected", Toast.LENGTH_SHORT).show();
+
 
                 }
             }
@@ -541,14 +486,16 @@ public class ManualActivity extends AppCompatActivity  {
         BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
         btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
         btSocket.connect();
-        Toast.makeText(getApplicationContext(),"bluetooth_connect_device: "+"BT Name: "+name+"\nBT Address: " , Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(),"Bluetooth Connesso a: "+name+"\n Bluetooth Address: " + address , Toast.LENGTH_SHORT).show();
         try {
 
         }
         catch(Exception e){}
     }
 
-    public void sendBluetoothMessage(char i) {
+    public void sendBluetoothMessage(String m) {
+
+        char i = m.charAt(0);
 
         try
         {
@@ -563,6 +510,7 @@ public class ManualActivity extends AppCompatActivity  {
         }
         catch (Exception e)
         {
+
             Toast.makeText(getApplicationContext(),e.getMessage(), Toast.LENGTH_SHORT).show();
         }
 

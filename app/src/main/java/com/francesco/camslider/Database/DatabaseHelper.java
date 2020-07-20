@@ -35,7 +35,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + "TILTING_UM" + " TEXT , "
 
                 + "SLIDE_LEFT" + " TEXT , "
-                + "SLIDE_LEFT_VALUE" + " CHAR , "
+                + "SLIDE_LEFT_VALUE" + " TEXT , "
                 + "SLIDE_RIGHT" + " TEXT , "
                 + "SLIDE_RIGHT_VALUE" + " TEXT , "
 
@@ -83,9 +83,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contVals.put("ROTATE_CW", "Rotate CW");
         contVals.put("ROTATE_CW_VALUE", "f");
 
-        contVals.put("GO_HOME", "Home");
+        contVals.put("GO_HOME", "Auto Home");
         contVals.put("GO_HOME_VALUE", "g");
-        contVals.put("GO_END", "go End");
+        contVals.put("GO_END", "Travel to end");
         contVals.put("GO_END_VALUE", "h");
 
         contVals.put("SLIDE_FREQUENCY_VALUE", "2");

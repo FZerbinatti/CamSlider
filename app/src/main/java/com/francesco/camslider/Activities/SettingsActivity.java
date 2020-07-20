@@ -58,8 +58,6 @@ public class SettingsActivity extends AppCompatActivity {
         v9 = findViewById(R.id.settings_slide_v9);
         v10 = findViewById(R.id.settings_slide_v10);
 
-
-
         hideSoftKeyboard();
 
         populateFields();
@@ -68,18 +66,35 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                mDatabaseHelper.updateSettings(new Setting(
-                        settings_distance.getText().toString(), settings_um_1.getText().toString(), settings_Rotation.getText().toString(),
-                        settings_um_2.getText().toString(), settings_tilting.getText().toString(), settings_um_3.getText().toString(),
-                        f1.getText().toString(), v1.getText().toString(), f2.getText().toString(), v2.getText().toString(), f3.getText().toString(), v3.getText().toString(),
-                        f4.getText().toString(), v4.getText().toString(), f5.getText().toString(), v5.getText().toString(), f6.getText().toString(), v6.getText().toString(),
-                        f7.getText().toString(), v7.getText().toString(), f8.getText().toString(), v8.getText().toString(), v9.getText().toString(), v10.getText().toString()
+                if(v1.getText().toString().length()>1 ||
+                        v1.getText().toString().length()>1 ||
+                        v2.getText().toString().length()>1 ||
+                        v3.getText().toString().length()>1 ||
+                        v4.getText().toString().length()>1 ||
+                        v5.getText().toString().length()>1 ||
+                        v6.getText().toString().length()>1 ||
+                        v7.getText().toString().length()>1 ||
+                        v8.getText().toString().length()>1 ||
+                        v9.getText().toString().length()>1 ||
+                        v10.getText().toString().length()>1
+                ){
+                    Toast.makeText(getApplicationContext(), R.string.settings_error, Toast.LENGTH_SHORT).show();
+                }else {
 
-                ));
+                    mDatabaseHelper.updateSettings(new Setting(
+                            settings_distance.getText().toString(), settings_um_1.getText().toString(), settings_Rotation.getText().toString(),
+                            settings_um_2.getText().toString(), settings_tilting.getText().toString(), settings_um_3.getText().toString(),
+                            f1.getText().toString(), v1.getText().toString(), f2.getText().toString(), v2.getText().toString(), f3.getText().toString(), v3.getText().toString(),
+                            f4.getText().toString(), v4.getText().toString(), f5.getText().toString(), v5.getText().toString(), f6.getText().toString(), v6.getText().toString(),
+                            f7.getText().toString(), v7.getText().toString(), f8.getText().toString(), v8.getText().toString(), v9.getText().toString(), v10.getText().toString()
 
-                Toast.makeText(SettingsActivity.this, "Updated.", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(SettingsActivity.this, ManualActivity.class);
-                startActivity(intent);
+                    ));
+
+                    Toast.makeText(SettingsActivity.this, R.string.settings_good_result, Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+
+
 
             }
         });
