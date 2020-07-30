@@ -85,7 +85,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         contVals.put("GO_HOME", "Auto Home");
         contVals.put("GO_HOME_VALUE", "g");
-        contVals.put("GO_END", "Travel to end");
+        contVals.put("GO_END", "Stop");
         contVals.put("GO_END_VALUE", "h");
 
         contVals.put("SLIDE_FREQUENCY_VALUE", "2");

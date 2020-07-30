@@ -1,5 +1,6 @@
 package com.francesco.camslider.Activities;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
@@ -7,11 +8,14 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.speech.RecognizerIntent;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -19,12 +23,9 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.francesco.camslider.Database.DatabaseHelper;
-
 import com.francesco.camslider.Objects.Setting;
 import com.francesco.camslider.R;
-
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
 
@@ -33,6 +34,7 @@ public class ManualActivity extends AppCompatActivity  {
     DatabaseHelper mDatabaseHelper;
 
     ImageButton timed;
+    private static  String STOP_ALL = "x";
     private static  String STOP_LINEAR_MOTOR = "i";
     private static  String STOP_ROTATION_MOTOR = "m";
     private static  String STOP_TILTING_MOTOR = "l";
@@ -45,12 +47,13 @@ public class ManualActivity extends AppCompatActivity  {
     private static  String ROTATE_CCW_VALUE = "e";
     private static  String ROTATE_CW_VALUE = "f";
 
-    private static final int JOYSTICK_FREQUENCY_VALUE = 5;
-    private static final int JOYSTICK_MS = ( Math.round(((float) 1/(JOYSTICK_FREQUENCY_VALUE))*1000));
+    private static int JOYSTICK_FREQUENCY_VALUE = 5;
+    private static int JOYSTICK_MS = ( Math.round(((float) 1/(JOYSTICK_FREQUENCY_VALUE))*1000));
 
+    private static final int REQUEST_CODE_SPEACH_INPUT = 1000;
+    private static int SLIDE_FREQUENCY_VALUE = 2;
+    private static int LINEAR_MS = ( Math.round(((float) 1/(SLIDE_FREQUENCY_VALUE))*1000));
 
-    private static final int SLIDE_FREQUENCY_VALUE = 2;
-    private static final int LINEAR_MS = ( Math.round(((float) 1/(SLIDE_FREQUENCY_VALUE))*1000));
 
 
     private static final int ARDUINO_DELAY_TIME = 0;
@@ -60,7 +63,7 @@ public class ManualActivity extends AppCompatActivity  {
     private static final int TOTAL_DEGREE_ROTATION = 10;
     private final String TAG ="ManualActivity: ";
     TextView velocita_rotazione, rotazione, velocita_movimento, distanza, textView_tilting;
-    ImageButton zeroing, arrow_left, arrow_right, hide_texts, go_end, settings, this_is_zero;
+    ImageButton zeroing, arrow_left, arrow_right, hide_texts, go_end, settings, this_is_zero, voice_input ;
     Long velox_angolo, velox_distanza;
     Integer delay_time_angolo, delay_time_distanza;
     Boolean text_hided;
@@ -125,6 +128,7 @@ public class ManualActivity extends AppCompatActivity  {
         arrow_right= findViewById(R.id. arrow_right);
         go_end = findViewById(R.id.go_end);
 
+        voice_input = findViewById(R.id.voice_input);
         joystick = (JoystickView) findViewById(R.id.joystickView);
 
         velox_angolo =1L;
@@ -184,6 +188,16 @@ public class ManualActivity extends AppCompatActivity  {
                 sendBluetoothMessage(GO_END_VALUE);
             }
         });
+
+        voice_input.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Voice2Text();
+            }
+        });
+
+
+
 
 
         // ---------------------------------------------------------------------------------------------------------------------- joystick ---------------------------------------------------------------------------------------------------------------------
@@ -419,15 +433,7 @@ public class ManualActivity extends AppCompatActivity  {
     protected void onResume() {
         super.onResume();
         Setting savedSettings =  mDatabaseHelper.getSettings();
-
-        GO_HOME_VALUE = savedSettings.getHome_value();
-        GO_END_VALUE =savedSettings.getEnd_value();
-        SLIDE_LEFT_VALUE = savedSettings.getSlide_left_value();
-        SLIDE_RIGHT_VALUE = savedSettings.getSlide_right_value();
-        TILT_DOWN_VALUE = savedSettings.getTilt_down_value();
-        TILT_UP_VALUE = savedSettings.getTilt_up_value();
-        ROTATE_CCW_VALUE = savedSettings.getRotate_CCW_value();
-        ROTATE_CW_VALUE = savedSettings.getRotate_CW_value();
+        populateFileds();
 
 
     }
@@ -450,6 +456,26 @@ public class ManualActivity extends AppCompatActivity  {
         rotazione_ccw_text.setText(setting.getRotate_CCW());
         rotazione_cw_text.setText(setting.getRotate_CW());
         tilt_up_text.setText(setting.getTilt_up());
+
+        GO_HOME_VALUE = setting.getHome_value();
+        GO_END_VALUE =setting.getEnd_value();
+        SLIDE_LEFT_VALUE = setting.getSlide_left_value();
+        SLIDE_RIGHT_VALUE = setting.getSlide_right_value();
+        TILT_DOWN_VALUE = setting.getTilt_down_value();
+        TILT_UP_VALUE = setting.getTilt_up_value();
+        ROTATE_CCW_VALUE = setting.getRotate_CCW_value();
+        ROTATE_CW_VALUE = setting.getRotate_CW_value();
+        JOYSTICK_FREQUENCY_VALUE = Integer.valueOf(setting.getJoystick_frequency_value());
+        SLIDE_FREQUENCY_VALUE = Integer. valueOf(setting.getTop_value());
+
+        JOYSTICK_MS = ( Math.round(((float) 1/(JOYSTICK_FREQUENCY_VALUE))*1000));
+
+        LINEAR_MS = ( Math.round(((float) 1/(SLIDE_FREQUENCY_VALUE))*1000));
+
+
+        Log.d(TAG, "populateFileds: JOYSTICK_FREQUENCY_VALUE"+JOYSTICK_FREQUENCY_VALUE);
+        Log.d(TAG, "populateFileds: SLIDE_FREQUENCY_VALUE"+SLIDE_FREQUENCY_VALUE);
+
 
     }
 
@@ -514,6 +540,54 @@ public class ManualActivity extends AppCompatActivity  {
             //Toast.makeText(getApplicationContext(),e.getMessage(), Toast.LENGTH_SHORT).show();
         }
 
+    }
+
+    public void Voice2Text (){
+
+        Intent intent_voice = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent_voice.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent_voice.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        intent_voice.putExtra(RecognizerIntent.EXTRA_PROMPT, (mDatabaseHelper.getSettings().getSlide_left()).toString() + ", " +
+                                                                    mDatabaseHelper.getSettings().getSlide_right()+ ", " +
+                                                                    mDatabaseHelper.getSettings().getTilt_up()+", " +
+                                                                    mDatabaseHelper.getSettings().getTilt_down()+", " +
+                                                                    mDatabaseHelper.getSettings().getRotate_CCW()+", " +
+                                                                    mDatabaseHelper.getSettings().getRotate_CW()+", " +
+                                                                    mDatabaseHelper.getSettings().getHome()+", " +
+                                                                    mDatabaseHelper.getSettings().getEnd());
+
+
+        try {
+            startActivityForResult(intent_voice, REQUEST_CODE_SPEACH_INPUT);
+        }catch (Exception e){
+            Log.d(TAG, "onClick: "+ e.getMessage());
+        }
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode){
+            case REQUEST_CODE_SPEACH_INPUT:{
+                if (resultCode == RESULT_OK && data != null ) {
+                    ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    String description = result.get(0).toLowerCase();
+
+                    if (description.equals(mDatabaseHelper.getSettings().getSlide_left().toLowerCase())){sendBluetoothMessage(SLIDE_LEFT_VALUE);}else
+                    if (description.equals(mDatabaseHelper.getSettings().getSlide_right().toLowerCase())){sendBluetoothMessage(SLIDE_RIGHT_VALUE);}else
+                    if (description.equals(mDatabaseHelper.getSettings().getTilt_up().toLowerCase())){sendBluetoothMessage(TILT_UP_VALUE);}else
+                    if (description.equals(mDatabaseHelper.getSettings().getTilt_down().toLowerCase())){sendBluetoothMessage(TILT_DOWN_VALUE);}else
+                    if (description.equals(mDatabaseHelper.getSettings().getRotate_CCW().toLowerCase())){sendBluetoothMessage(ROTATE_CCW_VALUE);}else
+                    if (description.equals(mDatabaseHelper.getSettings().getRotate_CW().toLowerCase())){sendBluetoothMessage(ROTATE_CW_VALUE);}else
+                    if (description.equals(mDatabaseHelper.getSettings().getHome().toLowerCase())){sendBluetoothMessage(GO_HOME_VALUE);}else
+                    if (description.equals(mDatabaseHelper.getSettings().getEnd().toLowerCase())){sendBluetoothMessage(STOP_ALL);}
+
+
+                }
+            }
+        }
     }
 
 

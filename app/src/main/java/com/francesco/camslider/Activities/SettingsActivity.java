@@ -74,9 +74,7 @@ public class SettingsActivity extends AppCompatActivity {
                         v5.getText().toString().length()>1 ||
                         v6.getText().toString().length()>1 ||
                         v7.getText().toString().length()>1 ||
-                        v8.getText().toString().length()>1 ||
-                        v9.getText().toString().length()>1 ||
-                        v10.getText().toString().length()>1
+                        v8.getText().toString().length()>1
                 ){
                     Toast.makeText(getApplicationContext(), R.string.settings_error, Toast.LENGTH_SHORT).show();
                 }else {
